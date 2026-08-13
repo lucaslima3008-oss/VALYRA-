@@ -208,7 +208,7 @@ export function buildPricingBreakdown(p: Product): PricingBreakdown {
     suggestedPrice: suggested,
     finalPrice: price,
     manualPrice: manual,
-    priceLines,
+    manualAdjustment,
     marginLines,
     realizedMarginPct: realizedMarginPct(p),
   };
