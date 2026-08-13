@@ -6,7 +6,6 @@ import {
   PencilLine,
   Tags,
   Calculator,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,6 @@ import {
   realizedMarginPct,
   suggestedPrice,
   totalCost,
-  type PricingBreakdown,
   type Product,
 } from "@/lib/pricing";
 import {
