@@ -102,6 +102,139 @@ export function realizedMarginPct(p: Product): number {
   return (net / price) * 100;
 }
 
+export interface BreakdownLine {
+  label: string;
+  value: number;
+  /** exibe o valor como destaque (totalizador) */
+  total?: boolean;
+  /** linha com efeito de subtração/despesa */
+  negative?: boolean;
+}
+
+export interface PricingBreakdown {
+  productName: string;
+  productType: ProductType;
+  costLines: BreakdownLine[];
+  totalCost: number;
+  divisor: number;
+  marginPct: number;
+  cardFeePct: number;
+  customPercentTotal: number;
+  logisticsCost: number;
+  suggestedPrice: number;
+  finalPrice: number;
+  manualPrice: boolean;
+  priceLines: BreakdownLine[];
+  marginLines: BreakdownLine[];
+  realizedMarginPct: number;
+}
+
+/** Decomposição completa do custo e do preço de venda */
+export function buildPricingBreakdown(p: Product): PricingBreakdown {
+  const cost = totalCost(p);
+  const suggested = suggestedPrice(p);
+  const price = finalPrice(p);
+  const manual = p.manualPrice !== null;
+  const customFixed = (p.customFees ?? []).filter((f) => f.kind === "fixed");
+  const customPercent = (p.customFees ?? []).filter((f) => f.kind === "percent");
+  const divisor =
+    1 - (p.marginPct + p.cardFeePct + customPercentTotal(p)) / 100;
+
+  const costLines: BreakdownLine[] =
+    p.type === "fabricado"
+      ? [
+          ...p.bom.map((item) => ({
+            label: `${item.name} (${item.quantity} × ${brl(item.unitCost)})`,
+            value: item.quantity * item.unitCost,
+          })),
+          {
+            label: `Mão de obra (${p.laborMinutes} min × ${brl(
+              p.laborCostPerMinute,
+            )})`,
+            value: p.laborMinutes * p.laborCostPerMinute,
+          },
+          ...customFixed.map((f) => ({
+            label: `${f.name || "Taxa fixa"} (fixa)`,
+            value: f.value,
+          })),
+        ]
+      : [
+          { label: "Preço pago ao fornecedor", value: p.supplierPrice },
+          { label: "Frete de aquisição", value: p.freight },
+          { label: "Imposto de compra", value: p.purchaseTax },
+          ...customFixed.map((f) => ({
+            label: `${f.name || "Taxa fixa"} (fixa)`,
+            value: f.value,
+          })),
+        ];
+
+  const priceLines: BreakdownLine[] = [
+    { label: "Custo total", value: cost, total: true },
+    {
+      label: `Divisor de markup (1 − (${p.marginPct.toFixed(1)}% + ${p.cardFeePct.toFixed(
+        1,
+      )}%${customPercent.length > 0 ? ` + ${customPercentTotal(p).toFixed(1)}%` : ""}))`,
+      value: divisor,
+    },
+    {
+      label: "Preço sugerido (custo ÷ divisor + logística)",
+      value: suggested,
+      total: true,
+    },
+    ...(manual
+      ? [
+          {
+            label: "Ajuste manual do preço praticado",
+            value: price - suggested,
+          },
+          { label: "Preço final praticado", value: price, total: true },
+        ]
+      : []),
+  ];
+
+  const cardFeeAmount = (price * p.cardFeePct) / 100;
+  const customPercentAmount = (price * customPercentTotal(p)) / 100;
+  const net = price - p.logisticsCost - cardFeeAmount - customPercentAmount - cost;
+
+  const marginLines: BreakdownLine[] = [
+    { label: "Preço final", value: price, total: true },
+    { label: "Custo total", value: cost, negative: true },
+    { label: "Logística", value: p.logisticsCost, negative: true },
+    {
+      label: `Taxa maquininha (${p.cardFeePct.toFixed(1)}%)`,
+      value: cardFeeAmount,
+      negative: true,
+    },
+    ...(customPercent.length > 0
+      ? [
+          {
+            label: `Taxas customizadas % (${customPercentTotal(p).toFixed(1)}%)`,
+            value: customPercentAmount,
+            negative: true,
+          },
+        ]
+      : []),
+    { label: "Lucro líquido", value: net, total: true },
+  ];
+
+  return {
+    productName: p.name,
+    productType: p.type,
+    costLines,
+    totalCost: cost,
+    divisor,
+    marginPct: p.marginPct,
+    cardFeePct: p.cardFeePct,
+    customPercentTotal: customPercentTotal(p),
+    logisticsCost: p.logisticsCost,
+    suggestedPrice: suggested,
+    finalPrice: price,
+    manualPrice: manual,
+    priceLines,
+    marginLines,
+    realizedMarginPct: realizedMarginPct(p),
+  };
+}
 
 export const brl = (v: number) =>
   isFinite(v)
