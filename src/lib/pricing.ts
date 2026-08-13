@@ -168,29 +168,7 @@ export function buildPricingBreakdown(p: Product): PricingBreakdown {
           })),
         ];
 
-  const priceLines: BreakdownLine[] = [
-    { label: "Custo total", value: cost, total: true },
-    {
-      label: `Divisor de markup (1 − (${p.marginPct.toFixed(1)}% + ${p.cardFeePct.toFixed(
-        1,
-      )}%${customPercent.length > 0 ? ` + ${customPercentTotal(p).toFixed(1)}%` : ""}))`,
-      value: divisor,
-    },
-    {
-      label: "Preço sugerido (custo ÷ divisor + logística)",
-      value: suggested,
-      total: true,
-    },
-    ...(manual
-      ? [
-          {
-            label: "Ajuste manual do preço praticado",
-            value: price - suggested,
-          },
-          { label: "Preço final praticado", value: price, total: true },
-        ]
-      : []),
-  ];
+  const manualAdjustment = manual ? price - suggested : 0;
 
   const cardFeeAmount = (price * p.cardFeePct) / 100;
   const customPercentAmount = (price * customPercentTotal(p)) / 100;
