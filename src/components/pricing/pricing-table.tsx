@@ -329,6 +329,7 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
 
                   <td className="px-3 py-3">
                     <div className="flex justify-end gap-1">
+                      <BreakdownDialog product={p} />
                       {manual && (
                         <Button
                           variant="ghost"
