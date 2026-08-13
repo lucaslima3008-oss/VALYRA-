@@ -1,4 +1,4 @@
-import { Factory, Store, RotateCcw, Trash2 } from "lucide-react";
+import { Factory, Store, RotateCcw, Trash2, PencilLine, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { InlineNumberField } from "./inline-fields";
@@ -70,6 +70,7 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
               const price = finalPrice(p);
               const margin = realizedMarginPct(p);
               const manual = p.manualPrice !== null;
+              const fees = p.customFees ?? [];
               return (
                 <tr
                   key={p.id}
@@ -92,8 +93,20 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         )}
                       </span>
                       <div>
-                        <p className="font-medium leading-tight">{p.name}</p>
+                        <p className="flex items-center gap-1.5 font-medium leading-tight">
+                          {p.name}
+                          {fees.length > 0 && (
+                            <span
+                              title={`Taxas customizadas: ${fees.map((f) => f.name || "Sem nome").join(", ")}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                            >
+                              <Tags className="size-3" />
+                              {fees.length}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
+
                           {p.type === "fabricado"
                             ? `${p.bom.length} itens de ficha técnica · ${p.laborMinutes} min`
                             : `Aquisição ${brl(p.supplierPrice)}`}
@@ -135,18 +148,20 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <InlineNumberField
-                        ariaLabel={`Margem alvo de ${p.name}`}
-                        value={p.marginPct}
-                        suffix="%"
-                        onChange={(v) => onUpdate(p.id, { marginPct: v })}
-                      />
+                    <div className="flex items-center justify-end">
                       <MarginBadge value={margin} />
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-col items-end">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {manual && (
+                        <PencilLine
+                          className="size-3.5 text-muted-foreground"
+                          aria-label="Preço ajustado manualmente"
+                        >
+                          <title>{`Preço manual · sugerido ${brl(suggested)}`}</title>
+                        </PencilLine>
+                      )}
                       <InlineNumberField
                         ariaLabel={`Preço final de ${p.name}`}
                         value={price}
@@ -154,11 +169,9 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         emphasis
                         onChange={(v) => onUpdate(p.id, { manualPrice: v })}
                       />
-                      <span className="pr-2 text-[11px] text-muted-foreground">
-                        {manual ? `Sugerido ${brl(suggested)}` : "Markup automático"}
-                      </span>
                     </div>
                   </td>
+
                   <td className="px-3 py-3">
                     <div className="flex justify-end gap-1">
                       {manual && (

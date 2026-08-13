@@ -1,5 +1,14 @@
 export type ProductType = "fabricado" | "revenda";
 
+export type FeeKind = "percent" | "fixed";
+
+export interface CustomFee {
+  id: string;
+  name: string;
+  kind: FeeKind;
+  value: number;
+}
+
 export interface BomItem {
   id: string;
   name: string;
@@ -23,6 +32,8 @@ export interface Product {
   marginPct: number;
   cardFeePct: number;
   logisticsCost: number;
+  /** Taxas e despesas customizadas */
+  customFees: CustomFee[];
   /** Preço praticado quando ajustado manualmente */
   manualPrice: number | null;
 }
@@ -42,25 +53,35 @@ export const emptyProduct = (): Product => ({
   marginPct: 25,
   cardFeePct: 3.5,
   logisticsCost: 0,
+  customFees: [],
   manualPrice: null,
 });
 
-/** Custo total conforme o tipo do produto */
+/** Soma das taxas customizadas percentuais */
+export const customPercentTotal = (p: Product) =>
+  (p.customFees ?? []).filter((f) => f.kind === "percent").reduce((s, f) => s + f.value, 0);
+
+/** Soma das taxas customizadas em valor fixo */
+export const customFixedTotal = (p: Product) =>
+  (p.customFees ?? []).filter((f) => f.kind === "fixed").reduce((s, f) => s + f.value, 0);
+
+/** Custo total conforme o tipo do produto (inclui despesas fixas customizadas) */
 export function totalCost(p: Product): number {
-  if (p.type === "fabricado") {
-    const materials = p.bom.reduce((sum, i) => sum + i.quantity * i.unitCost, 0);
-    return materials + p.laborMinutes * p.laborCostPerMinute;
-  }
-  return p.supplierPrice + p.freight + p.purchaseTax;
+  const base =
+    p.type === "fabricado"
+      ? p.bom.reduce((sum, i) => sum + i.quantity * i.unitCost, 0) +
+        p.laborMinutes * p.laborCostPerMinute
+      : p.supplierPrice + p.freight + p.purchaseTax;
+  return base + customFixedTotal(p);
 }
 
 /**
  * Preço sugerido via divisor de markup:
- * Custo / (1 - (margem + taxas)) + custos logísticos fixos.
+ * Custo / (1 - (margem + taxas + taxas % customizadas)) + custos logísticos fixos.
  */
 export function suggestedPrice(p: Product): number {
   const cost = totalCost(p);
-  const divisor = 1 - (p.marginPct + p.cardFeePct) / 100;
+  const divisor = 1 - (p.marginPct + p.cardFeePct + customPercentTotal(p)) / 100;
   if (divisor <= 0) return Number.POSITIVE_INFINITY;
   return cost / divisor + p.logisticsCost;
 }
@@ -73,9 +94,14 @@ export function finalPrice(p: Product): number {
 export function realizedMarginPct(p: Product): number {
   const price = finalPrice(p);
   if (!isFinite(price) || price <= 0) return 0;
-  const net = price - p.logisticsCost - (price * p.cardFeePct) / 100 - totalCost(p);
+  const net =
+    price -
+    p.logisticsCost -
+    (price * (p.cardFeePct + customPercentTotal(p))) / 100 -
+    totalCost(p);
   return (net / price) * 100;
 }
+
 
 export const brl = (v: number) =>
   isFinite(v)
@@ -131,6 +157,10 @@ export const mockProducts: Product[] = [
     marginPct: 32,
     cardFeePct: 2.99,
     logisticsCost: 8.9,
+    customFees: [
+      { id: uid(), name: "Comissão Marketplace", kind: "percent", value: 12 },
+      { id: uid(), name: "Embalagem especial", kind: "fixed", value: 2.5 },
+    ],
     manualPrice: null,
   },
   {

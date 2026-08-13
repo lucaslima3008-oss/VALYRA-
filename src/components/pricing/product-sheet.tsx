@@ -30,6 +30,8 @@ import {
   uid,
   type Product,
   type ProductType,
+  type CustomFee,
+  type FeeKind,
 } from "@/lib/pricing";
 
 interface Props {
@@ -87,6 +89,11 @@ function NumInput({
 export function ProductSheet({ open, onOpenChange, onSave }: Props) {
   const [draft, setDraft] = useState<Product>(emptyProduct);
   const set = (patch: Partial<Product>) => setDraft((d) => ({ ...d, ...patch }));
+  const patchFee = (id: string, patch: Partial<CustomFee>) =>
+    setDraft((d) => ({
+      ...d,
+      customFees: d.customFees.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    }));
 
   const cost = useMemo(() => totalCost(draft), [draft]);
   const price = useMemo(() => suggestedPrice(draft), [draft]);
@@ -331,6 +338,93 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
               />
             </div>
           </section>
+
+          <Separator />
+
+          <section className="space-y-4">
+            <StepLabel
+              n={5}
+              title="Composição de Taxas e Despesas Customizadas"
+              hint="Percentuais entram no divisor de markup; valores fixos somam ao custo"
+            />
+            <div className="space-y-2">
+              {draft.customFees.length === 0 && (
+                <p className="rounded-lg border border-dashed bg-muted/40 px-4 py-6 text-center text-xs text-muted-foreground">
+                  Nenhuma taxa customizada. Ex.: Comissão Marketplace, Taxa de Antecipação.
+                </p>
+              )}
+              {draft.customFees.map((fee) => (
+                <div
+                  key={fee.id}
+                  className="grid grid-cols-[1fr_auto_6rem_2rem] items-center gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
+                >
+                  <Input
+                    className="h-9"
+                    placeholder="Nome do componente"
+                    value={fee.name}
+                    onChange={(e) => patchFee(fee.id, { name: e.target.value })}
+                  />
+                  <div className="inline-flex rounded-md border bg-surface p-0.5">
+                    {(
+                      [
+                        { k: "percent", label: "%" },
+                        { k: "fixed", label: "R$" },
+                      ] as { k: FeeKind; label: string }[]
+                    ).map((opt) => (
+                      <button
+                        key={opt.k}
+                        type="button"
+                        onClick={() => patchFee(fee.id, { kind: opt.k })}
+                        className={cn(
+                          "rounded px-2.5 py-1 text-xs font-semibold transition-colors duration-200",
+                          fee.kind === opt.k
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    className="h-9 tabular-nums"
+                    type="number"
+                    step="0.01"
+                    value={fee.value}
+                    onChange={(e) =>
+                      patchFee(fee.id, { value: parseFloat(e.target.value) || 0 })
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remover componente"
+                    className="size-9 text-muted-foreground hover:text-destructive"
+                    onClick={() =>
+                      set({ customFees: draft.customFees.filter((f) => f.id !== fee.id) })
+                    }
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                className="w-full border-dashed"
+                onClick={() =>
+                  set({
+                    customFees: [
+                      ...draft.customFees,
+                      { id: uid(), name: "", kind: "percent", value: 0 },
+                    ],
+                  })
+                }
+              >
+                <Plus className="size-4" /> Adicionar Componente
+              </Button>
+            </div>
+          </section>
+
         </div>
 
         <div className="border-t bg-surface px-6 py-4">
