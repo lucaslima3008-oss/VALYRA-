@@ -157,6 +157,10 @@ export const mockProducts: Product[] = [
     marginPct: 32,
     cardFeePct: 2.99,
     logisticsCost: 8.9,
+    customFees: [
+      { id: uid(), name: "Comissão Marketplace", kind: "percent", value: 12 },
+      { id: uid(), name: "Embalagem especial", kind: "fixed", value: 2.5 },
+    ],
     manualPrice: null,
   },
   {
