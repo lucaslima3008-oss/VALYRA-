@@ -8,6 +8,7 @@ interface NumberFieldProps {
   suffix?: string;
   className?: string;
   emphasis?: boolean;
+  disabled?: boolean;
   ariaLabel: string;
 }
 
@@ -23,6 +24,7 @@ export function InlineNumberField({
   suffix,
   className,
   emphasis,
+  disabled,
   ariaLabel,
 }: NumberFieldProps) {
   const [draft, setDraft] = useState<string | null>(null);
@@ -40,7 +42,8 @@ export function InlineNumberField({
     <div
       className={cn(
         "group inline-flex items-center gap-1 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm tabular-nums transition-all duration-200",
-        "hover:border-border hover:bg-muted/60 focus-within:border-ring focus-within:bg-card focus-within:shadow-[var(--shadow-focus)]",
+        !disabled &&
+          "hover:border-border hover:bg-muted/60 focus-within:border-ring focus-within:bg-card focus-within:shadow-[var(--shadow-focus)]",
         emphasis && "font-semibold text-foreground",
         className,
       )}
@@ -48,8 +51,9 @@ export function InlineNumberField({
       {prefix && <span className="text-xs text-muted-foreground">{prefix}</span>}
       <input
         aria-label={ariaLabel}
+        disabled={disabled}
         inputMode="decimal"
-        className="w-16 bg-transparent text-right outline-none"
+        className="w-16 bg-transparent text-right outline-none disabled:cursor-not-allowed"
         value={display}
         onFocus={(e) => {
           setFocused(true);

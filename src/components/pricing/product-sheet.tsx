@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Factory,
   Store,
@@ -9,6 +9,7 @@ import {
   Percent,
   Truck,
   CircleDollarSign,
+  Gift,
 } from "lucide-react";
 import {
   Sheet,
@@ -28,6 +29,7 @@ import {
   suggestedPrice,
   totalCost,
   uid,
+  type BomItem,
   type Product,
   type ProductType,
   type CustomFee,
@@ -37,7 +39,9 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (p: Product) => void;
+  /** Produto em edição; ausente = cadastro novo */
+  product?: Product | null;
+  onSave: (p: Product, reason: string) => void;
 }
 
 function StepLabel({ n, title, hint }: { n: number; title: string; hint?: string }) {
@@ -86,8 +90,95 @@ function NumInput({
   );
 }
 
-export function ProductSheet({ open, onOpenChange, onSave }: Props) {
+function ItemsEditor({
+  items,
+  onChange,
+  addLabel,
+  emptyHint,
+  placeholder,
+}: {
+  items: BomItem[];
+  onChange: (items: BomItem[]) => void;
+  addLabel: string;
+  emptyHint: string;
+  placeholder: string;
+}) {
+  const patch = (id: string, p: Partial<BomItem>) =>
+    onChange(items.map((i) => (i.id === id ? { ...i, ...p } : i)));
+  return (
+    <div className="space-y-2">
+      {items.length === 0 && (
+        <p className="rounded-lg border border-dashed bg-muted/40 px-4 py-6 text-center text-xs text-muted-foreground">
+          {emptyHint}
+        </p>
+      )}
+      {items.map((item, idx) => (
+        <div
+          key={item.id}
+          className="grid grid-cols-[1fr_5rem_6rem_2rem] items-end gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
+        >
+          <div className="space-y-1">
+            {idx === 0 && <Label className="text-[11px] text-muted-foreground">Item</Label>}
+            <Input
+              className="h-9"
+              placeholder={placeholder}
+              value={item.name}
+              onChange={(e) => patch(item.id, { name: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1">
+            {idx === 0 && <Label className="text-[11px] text-muted-foreground">Qtd.</Label>}
+            <Input
+              className="h-9 tabular-nums"
+              type="number"
+              step="0.01"
+              value={item.quantity}
+              onChange={(e) => patch(item.id, { quantity: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
+          <div className="space-y-1">
+            {idx === 0 && <Label className="text-[11px] text-muted-foreground">Custo un.</Label>}
+            <Input
+              className="h-9 tabular-nums"
+              type="number"
+              step="0.01"
+              value={item.unitCost}
+              onChange={(e) => patch(item.id, { unitCost: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Remover item"
+            className="size-9 text-muted-foreground hover:text-destructive"
+            onClick={() => onChange(items.filter((i) => i.id !== item.id))}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        variant="outline"
+        className="w-full border-dashed"
+        onClick={() => onChange([...items, { id: uid(), name: "", quantity: 1, unitCost: 0 }])}
+      >
+        <Plus className="size-4" /> {addLabel}
+      </Button>
+    </div>
+  );
+}
+
+export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
+  const editing = !!product;
   const [draft, setDraft] = useState<Product>(emptyProduct);
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(product ? { ...product } : emptyProduct());
+    setReason("");
+  }, [open, product]);
+
   const set = (patch: Partial<Product>) => setDraft((d) => ({ ...d, ...patch }));
   const patchFee = (id: string, patch: Partial<CustomFee>) =>
     setDraft((d) => ({
@@ -98,12 +189,9 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
   const cost = useMemo(() => totalCost(draft), [draft]);
   const price = useMemo(() => suggestedPrice(draft), [draft]);
 
-  const reset = () => setDraft(emptyProduct());
-
   const submit = () => {
     if (!draft.name.trim()) return;
-    onSave({ ...draft, id: uid() });
-    reset();
+    onSave(editing ? { ...draft } : { ...draft, id: uid() }, reason.trim());
     onOpenChange(false);
   };
 
@@ -131,18 +219,16 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
   );
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(o) => {
-        if (!o) reset();
-        onOpenChange(o);
-      }}
-    >
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
         <SheetHeader className="border-b bg-surface px-6 py-5">
-          <SheetTitle className="text-lg tracking-tight">Cadastro de Produto</SheetTitle>
+          <SheetTitle className="text-lg tracking-tight">
+            {editing ? "Editar Produto" : "Cadastro de Produto"}
+          </SheetTitle>
           <SheetDescription>
-            Estruture a ficha de custos e os parâmetros de venda para calcular o preço ideal.
+            {editing
+              ? "Altere custos, taxas e parâmetros de venda — os cálculos são atualizados na hora."
+              : "Estruture a ficha de custos e os parâmetros de venda para calcular o preço ideal."}
           </SheetDescription>
         </SheetHeader>
 
@@ -174,98 +260,13 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
                 title="Ficha técnica (BOM) e mão de obra"
                 hint="Insumos, embalagens e tempo produtivo"
               />
-
-              <div className="space-y-2">
-                {draft.bom.length === 0 && (
-                  <p className="rounded-lg border border-dashed bg-muted/40 px-4 py-6 text-center text-xs text-muted-foreground">
-                    Nenhum insumo adicionado ainda.
-                  </p>
-                )}
-                {draft.bom.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-[1fr_5rem_6rem_2rem] items-end gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
-                  >
-                    <div className="space-y-1">
-                      {idx === 0 && (
-                        <Label className="text-[11px] text-muted-foreground">Item</Label>
-                      )}
-                      <Input
-                        className="h-9"
-                        placeholder="Insumo / embalagem"
-                        value={item.name}
-                        onChange={(e) =>
-                          set({
-                            bom: draft.bom.map((b) =>
-                              b.id === item.id ? { ...b, name: e.target.value } : b,
-                            ),
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      {idx === 0 && (
-                        <Label className="text-[11px] text-muted-foreground">Qtd.</Label>
-                      )}
-                      <Input
-                        className="h-9 tabular-nums"
-                        type="number"
-                        step="0.01"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          set({
-                            bom: draft.bom.map((b) =>
-                              b.id === item.id
-                                ? { ...b, quantity: parseFloat(e.target.value) || 0 }
-                                : b,
-                            ),
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      {idx === 0 && (
-                        <Label className="text-[11px] text-muted-foreground">Custo un.</Label>
-                      )}
-                      <Input
-                        className="h-9 tabular-nums"
-                        type="number"
-                        step="0.01"
-                        value={item.unitCost}
-                        onChange={(e) =>
-                          set({
-                            bom: draft.bom.map((b) =>
-                              b.id === item.id
-                                ? { ...b, unitCost: parseFloat(e.target.value) || 0 }
-                                : b,
-                            ),
-                          })
-                        }
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Remover insumo"
-                      className="size-9 text-muted-foreground hover:text-destructive"
-                      onClick={() => set({ bom: draft.bom.filter((b) => b.id !== item.id) })}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  className="w-full border-dashed"
-                  onClick={() =>
-                    set({
-                      bom: [...draft.bom, { id: uid(), name: "", quantity: 1, unitCost: 0 }],
-                    })
-                  }
-                >
-                  <Plus className="size-4" /> Adicionar insumo/embalagem
-                </Button>
-              </div>
+              <ItemsEditor
+                items={draft.bom}
+                onChange={(bom) => set({ bom })}
+                addLabel="Adicionar insumo/embalagem"
+                emptyHint="Nenhum insumo adicionado ainda."
+                placeholder="Insumo / embalagem"
+              />
 
               <div className="grid grid-cols-2 gap-3">
                 <NumInput
@@ -284,7 +285,7 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
               </div>
             </section>
           ) : (
-            <section className="space-y-4">
+            <section className="space-y-5">
               <StepLabel
                 n={3}
                 title="Custos de aquisição"
@@ -308,6 +309,27 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
                   icon={Receipt}
                   value={draft.purchaseTax}
                   onChange={(v) => set({ purchaseTax: v })}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Gift className="size-4 text-muted-foreground" />
+                  <div>
+                    <h4 className="text-sm font-semibold tracking-tight">
+                      Insumos de embalagem e brindes
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Sacola, caixa, laço e cortesias — somam ao custo total base.
+                    </p>
+                  </div>
+                </div>
+                <ItemsEditor
+                  items={draft.packaging ?? []}
+                  onChange={(packaging) => set({ packaging })}
+                  addLabel="Adicionar embalagem/brinde"
+                  emptyHint="Nenhuma embalagem ou brinde adicionado."
+                  placeholder="Ex.: Sacola kraft, laço, caixa"
                 />
               </div>
             </section>
@@ -337,6 +359,23 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
                 onChange={(v) => set({ logisticsCost: v })}
               />
             </div>
+            {editing && (
+              <div className="grid grid-cols-2 items-end gap-3">
+                <NumInput
+                  label="Preço praticado manual (R$)"
+                  icon={CircleDollarSign}
+                  value={draft.manualPrice ?? 0}
+                  onChange={(v) => set({ manualPrice: v })}
+                />
+                <Button
+                  variant="outline"
+                  disabled={draft.manualPrice === null}
+                  onClick={() => set({ manualPrice: null })}
+                >
+                  Usar preço sugerido
+                </Button>
+              </div>
+            )}
           </section>
 
           <Separator />
@@ -391,9 +430,7 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
                     type="number"
                     step="0.01"
                     value={fee.value}
-                    onChange={(e) =>
-                      patchFee(fee.id, { value: parseFloat(e.target.value) || 0 })
-                    }
+                    onChange={(e) => patchFee(fee.id, { value: parseFloat(e.target.value) || 0 })}
                   />
                   <Button
                     variant="ghost"
@@ -425,6 +462,18 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
             </div>
           </section>
 
+          {editing && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">
+                Motivo da alteração (registrado na auditoria)
+              </Label>
+              <Input
+                placeholder="Ex.: Reajuste de fornecedor, nova comissão do marketplace"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <div className="border-t bg-surface px-6 py-4">
@@ -447,7 +496,7 @@ export function ProductSheet({ open, onOpenChange, onSave }: Props) {
               Cancelar
             </Button>
             <Button onClick={submit} disabled={!draft.name.trim()}>
-              Salvar produto
+              {editing ? "Salvar alterações" : "Salvar produto"}
             </Button>
           </div>
         </div>
