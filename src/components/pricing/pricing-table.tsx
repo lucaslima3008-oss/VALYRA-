@@ -70,6 +70,7 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
               const price = finalPrice(p);
               const margin = realizedMarginPct(p);
               const manual = p.manualPrice !== null;
+              const fees = p.customFees ?? [];
               return (
                 <tr
                   key={p.id}
