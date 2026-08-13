@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { InlineNumberField } from "./inline-fields";
+import { HistoryDialog } from "./history-dialog";
+import type { AuditEntry } from "@/lib/audit";
 import {
   brl,
   buildPricingBreakdown,
@@ -31,7 +33,10 @@ import {
 
 interface Props {
   products: Product[];
-  onUpdate: (id: string, patch: Partial<Product>) => void;
+  auditLog: AuditEntry[];
+  canEdit: boolean;
+  onUpdate: (id: string, patch: Partial<Product>, reason?: string) => void;
+  onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
 }
 
@@ -188,7 +193,14 @@ function BreakdownDialog({ product }: { product: Product }) {
   );
 }
 
-export function PricingTable({ products, onUpdate, onDelete }: Props) {
+export function PricingTable({
+  products,
+  auditLog,
+  canEdit,
+  onUpdate,
+  onEdit,
+  onDelete,
+}: Props) {
   if (products.length === 0) {
     return (
       <div className="rounded-xl border border-dashed bg-card px-6 py-16 text-center">
@@ -286,6 +298,7 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         ariaLabel={`Taxa maquininha de ${p.name}`}
                         value={p.cardFeePct}
                         suffix="%"
+                        disabled={!canEdit}
                         onChange={(v) => onUpdate(p.id, { cardFeePct: v })}
                       />
                     </div>
@@ -296,6 +309,7 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         ariaLabel={`Logística de ${p.name}`}
                         value={p.logisticsCost}
                         prefix="R$"
+                        disabled={!canEdit}
                         onChange={(v) => onUpdate(p.id, { logisticsCost: v })}
                       />
                     </div>
@@ -320,6 +334,7 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         value={price}
                         prefix="R$"
                         emphasis
+                        disabled={!canEdit}
                         onChange={(v) => onUpdate(p.id, { manualPrice: v })}
                       />
                     </div>
@@ -328,7 +343,23 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                   <td className="px-3 py-3">
                     <div className="flex justify-end gap-1">
                       <BreakdownDialog product={p} />
-                      {manual && (
+                      <HistoryDialog
+                        product={p}
+                        entries={auditLog.filter((e) => e.productId === p.id)}
+                      />
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Editar produto"
+                          title="Editar produto e parâmetros"
+                          className="size-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => onEdit(p)}
+                        >
+                          <PencilLine className="size-4" />
+                        </Button>
+                      )}
+                      {canEdit && manual && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -340,15 +371,17 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                           <RotateCcw className="size-4" />
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Remover produto"
-                        className="size-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => onDelete(p.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remover produto"
+                          className="size-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => onDelete(p.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
