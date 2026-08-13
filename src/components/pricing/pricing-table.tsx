@@ -54,6 +54,142 @@ function MarginBadge({ value }: { value: number }) {
   );
 }
 
+function BreakdownDialog({ product }: { product: Product }) {
+  const b = buildPricingBreakdown(product);
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Detalhar cálculo"
+          title="Detalhar cálculo"
+          className="size-8 text-muted-foreground hover:text-foreground"
+        >
+          <Calculator className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Detalhamento do cálculo</DialogTitle>
+          <DialogDescription>
+            {b.productName}
+            <span
+              className={cn(
+                "ml-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                b.productType === "fabricado"
+                  ? "border-brand/40 bg-accent text-accent-foreground"
+                  : "border-border bg-secondary text-secondary-foreground",
+              )}
+            >
+              {b.productType === "fabricado" ? "Fabricado" : "Revenda"}
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-6 pt-2 sm:grid-cols-2">
+          <section className="rounded-xl border bg-surface p-4">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Composição do custo total
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {b.costLines.map((line, i) => (
+                <li key={i} className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">{line.label}</span>
+                  <span className="tabular-nums font-medium">{brl(line.value)}</span>
+                </li>
+              ))}
+              <li className="mt-2 flex justify-between gap-3 border-t pt-2 font-semibold">
+                <span>Custo total</span>
+                <span className="tabular-nums">{brl(b.totalCost)}</span>
+              </li>
+            </ul>
+          </section>
+
+          <section className="rounded-xl border bg-surface p-4">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Formação do preço de venda
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Custo total</span>
+                <span className="tabular-nums font-medium">{brl(b.totalCost)}</span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Margem alvo</span>
+                <span className="tabular-nums font-medium">{pct(b.marginPct)}</span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Taxa maquininha</span>
+                <span className="tabular-nums font-medium">{pct(b.cardFeePct)}</span>
+              </li>
+              {b.customPercentTotal > 0 && (
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Taxas customizadas %</span>
+                  <span className="tabular-nums font-medium">{pct(b.customPercentTotal)}</span>
+                </li>
+              )}
+              <li className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Divisor de markup</span>
+                <span className="tabular-nums font-medium">
+                  {b.divisor > 0 ? b.divisor.toFixed(4) : "—"}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Logística fixa</span>
+                <span className="tabular-nums font-medium">{brl(b.logisticsCost)}</span>
+              </li>
+              <li className="mt-2 flex justify-between gap-3 border-t pt-2 font-semibold">
+                <span>Preço sugerido</span>
+                <span className="tabular-nums">{brl(b.suggestedPrice)}</span>
+              </li>
+              {b.manualPrice && (
+                <li className="flex justify-between gap-3 text-primary">
+                  <span>Preço praticado (manual)</span>
+                  <span className="tabular-nums font-semibold">{brl(b.finalPrice)}</span>
+                </li>
+              )}
+            </ul>
+          </section>
+        </div>
+
+        <section className="rounded-xl border bg-surface p-4">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Demonstrativo da margem realizada
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {b.marginLines.map((line, i) => (
+              <li
+                key={i}
+                className={cn(
+                  "flex justify-between gap-3",
+                  line.total && "border-t pt-2 font-semibold",
+                )}
+              >
+                <span className={cn(line.negative && "text-muted-foreground")}>{line.label}</span>
+                <span
+                  className={cn(
+                    "tabular-nums font-medium",
+                    line.negative && "text-muted-foreground",
+                    line.total && "font-semibold text-foreground",
+                  )}
+                >
+                  {line.negative ? "− " : ""}
+                  {brl(Math.abs(line.value))}
+                </span>
+              </li>
+            ))}
+            <li className="mt-2 flex justify-between gap-3 border-t pt-2">
+              <span className="font-semibold">Margem realizada</span>
+              <MarginBadge value={b.realizedMarginPct} />
+            </li>
+          </ul>
+        </section>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function PricingTable({ products, onUpdate, onDelete }: Props) {
   if (products.length === 0) {
     return (
