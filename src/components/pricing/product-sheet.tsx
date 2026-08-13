@@ -87,6 +87,11 @@ function NumInput({
 export function ProductSheet({ open, onOpenChange, onSave }: Props) {
   const [draft, setDraft] = useState<Product>(emptyProduct);
   const set = (patch: Partial<Product>) => setDraft((d) => ({ ...d, ...patch }));
+  const patchFee = (id: string, patch: Partial<CustomFee>) =>
+    setDraft((d) => ({
+      ...d,
+      customFees: d.customFees.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    }));
 
   const cost = useMemo(() => totalCost(draft), [draft]);
   const price = useMemo(() => suggestedPrice(draft), [draft]);
