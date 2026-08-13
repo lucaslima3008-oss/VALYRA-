@@ -28,6 +28,8 @@ export interface Product {
   supplierPrice: number;
   freight: number;
   purchaseTax: number;
+  /** Insumos de embalagem e brindes (revenda) */
+  packaging: BomItem[];
   // Parâmetros de venda
   marginPct: number;
   cardFeePct: number;
@@ -50,6 +52,7 @@ export const emptyProduct = (): Product => ({
   supplierPrice: 0,
   freight: 0,
   purchaseTax: 0,
+  packaging: [],
   marginPct: 25,
   cardFeePct: 3.5,
   logisticsCost: 0,
@@ -65,13 +68,20 @@ export const customPercentTotal = (p: Product) =>
 export const customFixedTotal = (p: Product) =>
   (p.customFees ?? []).filter((f) => f.kind === "fixed").reduce((s, f) => s + f.value, 0);
 
+/** Custo de embalagens e brindes (revenda) */
+export const packagingCost = (p: Product) =>
+  (p.packaging ?? []).reduce((s, i) => s + i.quantity * i.unitCost, 0);
+
 /** Custo total conforme o tipo do produto (inclui despesas fixas customizadas) */
 export function totalCost(p: Product): number {
   const base =
     p.type === "fabricado"
       ? p.bom.reduce((sum, i) => sum + i.quantity * i.unitCost, 0) +
         p.laborMinutes * p.laborCostPerMinute
-      : p.supplierPrice + p.freight + p.purchaseTax;
+      : p.supplierPrice +
+        p.freight +
+        p.purchaseTax +
+        packagingCost(p);
   return base + customFixedTotal(p);
 }
 
@@ -162,6 +172,10 @@ export function buildPricingBreakdown(p: Product): PricingBreakdown {
           { label: "Preço pago ao fornecedor", value: p.supplierPrice },
           { label: "Frete de aquisição", value: p.freight },
           { label: "Imposto de compra", value: p.purchaseTax },
+          ...(p.packaging ?? []).map((item) => ({
+            label: `${item.name || "Embalagem"} (${item.quantity} × ${brl(item.unitCost)})`,
+            value: item.quantity * item.unitCost,
+          })),
           ...customFixed.map((f) => ({
             label: `${f.name || "Taxa fixa"} (fixa)`,
             value: f.value,
@@ -262,6 +276,10 @@ export const mockProducts: Product[] = [
     id: "p3",
     name: "Café Especial Torrado 500g",
     type: "revenda",
+    packaging: [
+      { id: uid(), name: "Sacola kraft", quantity: 1, unitCost: 1.2 },
+      { id: uid(), name: "Laço decorativo", quantity: 1, unitCost: 0.65 },
+    ],
     supplierPrice: 28.4,
     freight: 3.2,
     purchaseTax: 2.1,
