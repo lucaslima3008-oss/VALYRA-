@@ -83,5 +83,19 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.2.0"
-  }
+  },
+  "version": "1.0.0",
+  "description": "Crie uma aplicação web corporativa completa de Gestão de Custos e Precificação (\"Cost & Price\") utilizando React, Tailwind CSS e ícones do 'lucide-react'. Assuma que o ambiente usa TanStack Start e Supabase (portanto, crie mock data estruturado em memória para simular o banco de dados).",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucaslima3008-oss/price-craft-70.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lucaslima3008-oss/price-craft-70/issues"
+  },
+  "homepage": "https://github.com/lucaslima3008-oss/price-craft-70#readme"
 }
