@@ -56,7 +56,7 @@ type Tab = "precificacao" | "usuarios";
 function Index() {
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [users, setUsers] = useState<AppUser[]>(mockUsers);
-  const [currentUserId, setCurrentUserId] = useState(mockUsers[0].id);
+  const [currentUserId, setCurrentUserId] = useState(mockUsers[0]!.id);
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("todos");
@@ -64,7 +64,7 @@ function Index() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
 
-  const currentUser = users.find((u) => u.id === currentUserId) ?? users[0];
+  const currentUser = users.find((u) => u.id === currentUserId) ?? users[0]!;
   const canEdit = currentUser?.role === "admin" && currentUser?.status === "ativo";
 
   const filtered = useMemo(
