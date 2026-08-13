@@ -9,13 +9,30 @@ import { initialInventory, initialMovements } from "./inventory";
 import { initialSales, initialCashTransactions } from "./sales";
 import { mockUsers } from "./users";
 
+// Helpers seguros para SSR (Server-Side Rendering)
+function safeGetItem(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
 // ==============================================================================
 // 1. PRODUTOS E FICHA TÉCNICA
 // ==============================================================================
 
 export async function fetchSupabaseProducts(): Promise<Product[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_products");
+    const cached = safeGetItem("cost_price_products");
     return cached ? JSON.parse(cached) : mockProducts;
   }
 
@@ -25,9 +42,8 @@ export async function fetchSupabaseProducts(): Promise<Product[]> {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (prodErr || !prodData) {
-      console.warn("Supabase fetchProducts fallback:", prodErr);
-      const cached = localStorage.getItem("cost_price_products");
+    if (prodErr || !prodData || prodData.length === 0) {
+      const cached = safeGetItem("cost_price_products");
       return cached ? JSON.parse(cached) : mockProducts;
     }
 
@@ -82,28 +98,26 @@ export async function fetchSupabaseProducts(): Promise<Product[]> {
       };
     });
 
-    localStorage.setItem("cost_price_products", JSON.stringify(products));
+    safeSetItem("cost_price_products", JSON.stringify(products));
     return products;
   } catch (err) {
     console.error("Erro ao buscar produtos no Supabase:", err);
-    const cached = localStorage.getItem("cost_price_products");
+    const cached = safeGetItem("cost_price_products");
     return cached ? JSON.parse(cached) : mockProducts;
   }
 }
 
 export async function saveSupabaseProduct(product: Product): Promise<void> {
-  // Salvar no storage local primeiro para atualização imediata
-  const current = localStorage.getItem("cost_price_products");
+  const current = safeGetItem("cost_price_products");
   const list: Product[] = current ? JSON.parse(current) : mockProducts;
   const idx = list.findIndex((p) => p.id === product.id);
   if (idx >= 0) list[idx] = product;
   else list.unshift(product);
-  localStorage.setItem("cost_price_products", JSON.stringify(list));
+  safeSetItem("cost_price_products", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
   try {
-    // 1. Upsert Produto
     const { error: prodErr } = await supabase.from("produtos").upsert({
       id: product.id.length > 20 ? product.id : undefined,
       nome: product.name,
@@ -122,7 +136,6 @@ export async function saveSupabaseProduct(product: Product): Promise<void> {
 
     if (prodErr) console.error("Erro ao salvar produto no Supabase:", prodErr);
 
-    // 2. Limpar e re-inserir itens da ficha técnica
     if (product.id.length > 20) {
       await supabase.from("ficha_tecnica_itens").delete().eq("produto_id", product.id);
 
@@ -160,10 +173,10 @@ export async function saveSupabaseProduct(product: Product): Promise<void> {
 }
 
 export async function deleteSupabaseProduct(productId: string): Promise<void> {
-  const current = localStorage.getItem("cost_price_products");
+  const current = safeGetItem("cost_price_products");
   if (current) {
     const list: Product[] = JSON.parse(current);
-    localStorage.setItem("cost_price_products", JSON.stringify(list.filter((p) => p.id !== productId)));
+    safeSetItem("cost_price_products", JSON.stringify(list.filter((p) => p.id !== productId)));
   }
 
   if (!isSupabaseConfigured) return;
@@ -181,14 +194,14 @@ export async function deleteSupabaseProduct(productId: string): Promise<void> {
 
 export async function fetchSupabaseInventory(): Promise<InventoryItem[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_inventory");
+    const cached = safeGetItem("cost_price_inventory");
     return cached ? JSON.parse(cached) : initialInventory;
   }
 
   try {
     const { data, error } = await supabase.from("estoque").select("*").order("nome");
     if (error || !data || data.length === 0) {
-      const cached = localStorage.getItem("cost_price_inventory");
+      const cached = safeGetItem("cost_price_inventory");
       return cached ? JSON.parse(cached) : initialInventory;
     }
 
@@ -204,22 +217,22 @@ export async function fetchSupabaseInventory(): Promise<InventoryItem[]> {
       lastUpdated: row.updated_at,
     }));
 
-    localStorage.setItem("cost_price_inventory", JSON.stringify(items));
+    safeSetItem("cost_price_inventory", JSON.stringify(items));
     return items;
   } catch (err) {
     console.error("Erro ao buscar estoque no Supabase:", err);
-    const cached = localStorage.getItem("cost_price_inventory");
+    const cached = safeGetItem("cost_price_inventory");
     return cached ? JSON.parse(cached) : initialInventory;
   }
 }
 
 export async function saveSupabaseInventoryItem(item: InventoryItem): Promise<void> {
-  const cached = localStorage.getItem("cost_price_inventory");
+  const cached = safeGetItem("cost_price_inventory");
   const list: InventoryItem[] = cached ? JSON.parse(cached) : initialInventory;
   const idx = list.findIndex((i) => i.id === item.id);
   if (idx >= 0) list[idx] = item;
   else list.unshift(item);
-  localStorage.setItem("cost_price_inventory", JSON.stringify(list));
+  safeSetItem("cost_price_inventory", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
@@ -242,7 +255,7 @@ export async function saveSupabaseInventoryItem(item: InventoryItem): Promise<vo
 
 export async function fetchSupabaseMovements(): Promise<StockMovement[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_movements");
+    const cached = safeGetItem("cost_price_movements");
     return cached ? JSON.parse(cached) : initialMovements;
   }
 
@@ -253,7 +266,7 @@ export async function fetchSupabaseMovements(): Promise<StockMovement[]> {
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {
-      const cached = localStorage.getItem("cost_price_movements");
+      const cached = safeGetItem("cost_price_movements");
       return cached ? JSON.parse(cached) : initialMovements;
     }
 
@@ -269,20 +282,20 @@ export async function fetchSupabaseMovements(): Promise<StockMovement[]> {
       user: row.usuario,
     }));
 
-    localStorage.setItem("cost_price_movements", JSON.stringify(movs));
+    safeSetItem("cost_price_movements", JSON.stringify(movs));
     return movs;
   } catch (err) {
     console.error("Erro ao buscar movimentações:", err);
-    const cached = localStorage.getItem("cost_price_movements");
+    const cached = safeGetItem("cost_price_movements");
     return cached ? JSON.parse(cached) : initialMovements;
   }
 }
 
 export async function recordSupabaseMovement(movement: StockMovement): Promise<void> {
-  const cached = localStorage.getItem("cost_price_movements");
+  const cached = safeGetItem("cost_price_movements");
   const list: StockMovement[] = cached ? JSON.parse(cached) : initialMovements;
   list.unshift(movement);
-  localStorage.setItem("cost_price_movements", JSON.stringify(list));
+  safeSetItem("cost_price_movements", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
@@ -309,7 +322,7 @@ export async function recordSupabaseMovement(movement: StockMovement): Promise<v
 
 export async function fetchSupabaseSales(): Promise<Sale[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_sales");
+    const cached = safeGetItem("cost_price_sales");
     return cached ? JSON.parse(cached) : initialSales;
   }
 
@@ -320,7 +333,7 @@ export async function fetchSupabaseSales(): Promise<Sale[]> {
       .order("created_at", { ascending: false });
 
     if (salesErr || !salesData || salesData.length === 0) {
-      const cached = localStorage.getItem("cost_price_sales");
+      const cached = safeGetItem("cost_price_sales");
       return cached ? JSON.parse(cached) : initialSales;
     }
 
@@ -354,20 +367,20 @@ export async function fetchSupabaseSales(): Promise<Sale[]> {
       };
     });
 
-    localStorage.setItem("cost_price_sales", JSON.stringify(sales));
+    safeSetItem("cost_price_sales", JSON.stringify(sales));
     return sales;
   } catch (err) {
     console.error("Erro ao buscar vendas no Supabase:", err);
-    const cached = localStorage.getItem("cost_price_sales");
+    const cached = safeGetItem("cost_price_sales");
     return cached ? JSON.parse(cached) : initialSales;
   }
 }
 
 export async function saveSupabaseSale(sale: Sale): Promise<void> {
-  const cached = localStorage.getItem("cost_price_sales");
+  const cached = safeGetItem("cost_price_sales");
   const list: Sale[] = cached ? JSON.parse(cached) : initialSales;
   list.unshift(sale);
-  localStorage.setItem("cost_price_sales", JSON.stringify(list));
+  safeSetItem("cost_price_sales", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
@@ -418,7 +431,7 @@ export async function saveSupabaseSale(sale: Sale): Promise<void> {
 
 export async function fetchSupabaseCashflow(): Promise<CashTransaction[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_cashflow");
+    const cached = safeGetItem("cost_price_cashflow");
     return cached ? JSON.parse(cached) : initialCashTransactions;
   }
 
@@ -429,7 +442,7 @@ export async function fetchSupabaseCashflow(): Promise<CashTransaction[]> {
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {
-      const cached = localStorage.getItem("cost_price_cashflow");
+      const cached = safeGetItem("cost_price_cashflow");
       return cached ? JSON.parse(cached) : initialCashTransactions;
     }
 
@@ -444,20 +457,20 @@ export async function fetchSupabaseCashflow(): Promise<CashTransaction[]> {
       saleId: row.venda_id,
     }));
 
-    localStorage.setItem("cost_price_cashflow", JSON.stringify(txs));
+    safeSetItem("cost_price_cashflow", JSON.stringify(txs));
     return txs;
   } catch (err) {
     console.error("Erro ao buscar fluxo de caixa:", err);
-    const cached = localStorage.getItem("cost_price_cashflow");
+    const cached = safeGetItem("cost_price_cashflow");
     return cached ? JSON.parse(cached) : initialCashTransactions;
   }
 }
 
 export async function saveSupabaseCashTransaction(tx: CashTransaction): Promise<void> {
-  const cached = localStorage.getItem("cost_price_cashflow");
+  const cached = safeGetItem("cost_price_cashflow");
   const list: CashTransaction[] = cached ? JSON.parse(cached) : initialCashTransactions;
   list.unshift(tx);
-  localStorage.setItem("cost_price_cashflow", JSON.stringify(list));
+  safeSetItem("cost_price_cashflow", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
@@ -481,14 +494,14 @@ export async function saveSupabaseCashTransaction(tx: CashTransaction): Promise<
 
 export async function fetchSupabaseUsers(): Promise<AppUser[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_users");
+    const cached = safeGetItem("cost_price_users");
     return cached ? JSON.parse(cached) : mockUsers;
   }
 
   try {
     const { data, error } = await supabase.from("usuarios").select("*").order("nome");
     if (error || !data || data.length === 0) {
-      const cached = localStorage.getItem("cost_price_users");
+      const cached = safeGetItem("cost_price_users");
       return cached ? JSON.parse(cached) : mockUsers;
     }
 
@@ -501,22 +514,22 @@ export async function fetchSupabaseUsers(): Promise<AppUser[]> {
       createdAt: row.created_at,
     }));
 
-    localStorage.setItem("cost_price_users", JSON.stringify(users));
+    safeSetItem("cost_price_users", JSON.stringify(users));
     return users;
   } catch (err) {
     console.error("Erro ao buscar usuários no Supabase:", err);
-    const cached = localStorage.getItem("cost_price_users");
+    const cached = safeGetItem("cost_price_users");
     return cached ? JSON.parse(cached) : mockUsers;
   }
 }
 
 export async function saveSupabaseUser(user: AppUser): Promise<void> {
-  const cached = localStorage.getItem("cost_price_users");
+  const cached = safeGetItem("cost_price_users");
   const list: AppUser[] = cached ? JSON.parse(cached) : mockUsers;
   const idx = list.findIndex((u) => u.id === user.id);
   if (idx >= 0) list[idx] = user;
   else list.unshift(user);
-  localStorage.setItem("cost_price_users", JSON.stringify(list));
+  safeSetItem("cost_price_users", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
@@ -534,10 +547,10 @@ export async function saveSupabaseUser(user: AppUser): Promise<void> {
 }
 
 export async function deleteSupabaseUser(userId: string): Promise<void> {
-  const cached = localStorage.getItem("cost_price_users");
+  const cached = safeGetItem("cost_price_users");
   if (cached) {
     const list: AppUser[] = JSON.parse(cached);
-    localStorage.setItem("cost_price_users", JSON.stringify(list.filter((u) => u.id !== userId)));
+    safeSetItem("cost_price_users", JSON.stringify(list.filter((u) => u.id !== userId)));
   }
 
   if (!isSupabaseConfigured) return;
@@ -555,7 +568,7 @@ export async function deleteSupabaseUser(userId: string): Promise<void> {
 
 export async function fetchSupabaseAudit(): Promise<AuditEntry[]> {
   if (!isSupabaseConfigured) {
-    const cached = localStorage.getItem("cost_price_audit");
+    const cached = safeGetItem("cost_price_audit");
     return cached ? JSON.parse(cached) : [];
   }
 
@@ -566,7 +579,7 @@ export async function fetchSupabaseAudit(): Promise<AuditEntry[]> {
       .order("created_at", { ascending: false });
 
     if (error || !data) {
-      const cached = localStorage.getItem("cost_price_audit");
+      const cached = safeGetItem("cost_price_audit");
       return cached ? JSON.parse(cached) : [];
     }
 
@@ -582,20 +595,20 @@ export async function fetchSupabaseAudit(): Promise<AuditEntry[]> {
       reason: row.motivo || "",
     }));
 
-    localStorage.setItem("cost_price_audit", JSON.stringify(logs));
+    safeSetItem("cost_price_audit", JSON.stringify(logs));
     return logs;
   } catch (err) {
     console.error("Erro ao buscar histórico de auditoria:", err);
-    const cached = localStorage.getItem("cost_price_audit");
+    const cached = safeGetItem("cost_price_audit");
     return cached ? JSON.parse(cached) : [];
   }
 }
 
 export async function recordSupabaseAudit(entry: AuditEntry): Promise<void> {
-  const cached = localStorage.getItem("cost_price_audit");
+  const cached = safeGetItem("cost_price_audit");
   const list: AuditEntry[] = cached ? JSON.parse(cached) : [];
   list.unshift(entry);
-  localStorage.setItem("cost_price_audit", JSON.stringify(list));
+  safeSetItem("cost_price_audit", JSON.stringify(list));
 
   if (!isSupabaseConfigured) return;
 
