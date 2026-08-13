@@ -1,4 +1,4 @@
-import { Factory, Store, RotateCcw, Trash2 } from "lucide-react";
+import { Factory, Store, RotateCcw, Trash2, PencilLine, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { InlineNumberField } from "./inline-fields";
