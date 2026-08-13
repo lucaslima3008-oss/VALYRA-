@@ -158,7 +158,9 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         <PencilLine
                           className="size-3.5 text-muted-foreground"
                           aria-label="Preço ajustado manualmente"
-                        />
+                        >
+                          <title>{`Preço manual · sugerido ${brl(suggested)}`}</title>
+                        </PencilLine>
                       )}
                       <InlineNumberField
                         ariaLabel={`Preço final de ${p.name}`}
