@@ -93,8 +93,20 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         )}
                       </span>
                       <div>
-                        <p className="font-medium leading-tight">{p.name}</p>
+                        <p className="flex items-center gap-1.5 font-medium leading-tight">
+                          {p.name}
+                          {fees.length > 0 && (
+                            <span
+                              title={`Taxas customizadas: ${fees.map((f) => f.name || "Sem nome").join(", ")}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                            >
+                              <Tags className="size-3" />
+                              {fees.length}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
+
                           {p.type === "fabricado"
                             ? `${p.bom.length} itens de ficha técnica · ${p.laborMinutes} min`
                             : `Aquisição ${brl(p.supplierPrice)}`}
