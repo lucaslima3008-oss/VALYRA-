@@ -30,6 +30,8 @@ import {
   uid,
   type Product,
   type ProductType,
+  type CustomFee,
+  type FeeKind,
 } from "@/lib/pricing";
 
 interface Props {
