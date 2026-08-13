@@ -1,16 +1,35 @@
-import { Factory, Store, RotateCcw, Trash2, PencilLine, Tags } from "lucide-react";
+import {
+  Factory,
+  Store,
+  RotateCcw,
+  Trash2,
+  PencilLine,
+  Tags,
+  Calculator,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { InlineNumberField } from "./inline-fields";
 import {
   brl,
+  buildPricingBreakdown,
   finalPrice,
   pct,
   realizedMarginPct,
   suggestedPrice,
   totalCost,
+  type PricingBreakdown,
   type Product,
 } from "@/lib/pricing";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Props {
   products: Product[];
