@@ -1,0 +1,166 @@
+export type ProductType = "fabricado" | "revenda";
+
+export interface BomItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitCost: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  type: ProductType;
+  // Fabricado
+  bom: BomItem[];
+  laborMinutes: number;
+  laborCostPerMinute: number;
+  // Revenda
+  supplierPrice: number;
+  freight: number;
+  purchaseTax: number;
+  // Parâmetros de venda
+  marginPct: number;
+  cardFeePct: number;
+  logisticsCost: number;
+  /** Preço praticado quando ajustado manualmente */
+  manualPrice: number | null;
+}
+
+export const uid = () => Math.random().toString(36).slice(2, 10);
+
+export const emptyProduct = (): Product => ({
+  id: uid(),
+  name: "",
+  type: "fabricado",
+  bom: [],
+  laborMinutes: 0,
+  laborCostPerMinute: 0,
+  supplierPrice: 0,
+  freight: 0,
+  purchaseTax: 0,
+  marginPct: 25,
+  cardFeePct: 3.5,
+  logisticsCost: 0,
+  manualPrice: null,
+});
+
+/** Custo total conforme o tipo do produto */
+export function totalCost(p: Product): number {
+  if (p.type === "fabricado") {
+    const materials = p.bom.reduce((sum, i) => sum + i.quantity * i.unitCost, 0);
+    return materials + p.laborMinutes * p.laborCostPerMinute;
+  }
+  return p.supplierPrice + p.freight + p.purchaseTax;
+}
+
+/**
+ * Preço sugerido via divisor de markup:
+ * Custo / (1 - (margem + taxas)) + custos logísticos fixos.
+ */
+export function suggestedPrice(p: Product): number {
+  const cost = totalCost(p);
+  const divisor = 1 - (p.marginPct + p.cardFeePct) / 100;
+  if (divisor <= 0) return Number.POSITIVE_INFINITY;
+  return cost / divisor + p.logisticsCost;
+}
+
+export function finalPrice(p: Product): number {
+  return p.manualPrice ?? suggestedPrice(p);
+}
+
+/** Margem realizada com o preço praticado */
+export function realizedMarginPct(p: Product): number {
+  const price = finalPrice(p);
+  if (!isFinite(price) || price <= 0) return 0;
+  const net = price - p.logisticsCost - (price * p.cardFeePct) / 100 - totalCost(p);
+  return (net / price) * 100;
+}
+
+export const brl = (v: number) =>
+  isFinite(v)
+    ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : "—";
+
+export const pct = (v: number) => `${v.toFixed(1).replace(".", ",")}%`;
+
+export const mockProducts: Product[] = [
+  {
+    ...emptyProduct(),
+    id: "p1",
+    name: "Bolo de Cenoura Premium 1,2kg",
+    type: "fabricado",
+    bom: [
+      { id: uid(), name: "Cenoura orgânica (kg)", quantity: 0.4, unitCost: 8.9 },
+      { id: uid(), name: "Farinha de trigo (kg)", quantity: 0.5, unitCost: 5.4 },
+      { id: uid(), name: "Cobertura de chocolate (kg)", quantity: 0.3, unitCost: 32 },
+      { id: uid(), name: "Embalagem rígida", quantity: 1, unitCost: 3.75 },
+    ],
+    laborMinutes: 45,
+    laborCostPerMinute: 0.62,
+    marginPct: 28,
+    cardFeePct: 3.99,
+    logisticsCost: 6.5,
+    manualPrice: null,
+  },
+  {
+    ...emptyProduct(),
+    id: "p2",
+    name: "Kit Presente Corporativo",
+    type: "fabricado",
+    bom: [
+      { id: uid(), name: "Caneca cerâmica", quantity: 1, unitCost: 14.2 },
+      { id: uid(), name: "Caixa kraft personalizada", quantity: 1, unitCost: 9.8 },
+      { id: uid(), name: "Cartão impresso", quantity: 1, unitCost: 1.4 },
+    ],
+    laborMinutes: 18,
+    laborCostPerMinute: 0.62,
+    marginPct: 16,
+    cardFeePct: 3.2,
+    logisticsCost: 12,
+    manualPrice: 62.9,
+  },
+  {
+    ...emptyProduct(),
+    id: "p3",
+    name: "Café Especial Torrado 500g",
+    type: "revenda",
+    supplierPrice: 28.4,
+    freight: 3.2,
+    purchaseTax: 2.1,
+    marginPct: 32,
+    cardFeePct: 2.99,
+    logisticsCost: 8.9,
+    manualPrice: null,
+  },
+  {
+    ...emptyProduct(),
+    id: "p4",
+    name: "Garrafa Térmica Inox 1L",
+    type: "revenda",
+    supplierPrice: 74.9,
+    freight: 9.4,
+    purchaseTax: 6.3,
+    marginPct: 12,
+    cardFeePct: 4.2,
+    logisticsCost: 15,
+    manualPrice: null,
+  },
+  {
+    ...emptyProduct(),
+    id: "p5",
+    name: "Linha Artesanal — Vela de Soja 180g",
+    type: "fabricado",
+    bom: [
+      { id: uid(), name: "Cera de soja (kg)", quantity: 0.18, unitCost: 42 },
+      { id: uid(), name: "Essência importada (ml)", quantity: 12, unitCost: 0.38 },
+      { id: uid(), name: "Pote de vidro", quantity: 1, unitCost: 6.1 },
+    ],
+    laborMinutes: 12,
+    laborCostPerMinute: 0.55,
+    marginPct: 41,
+    cardFeePct: 3.5,
+    logisticsCost: 7.4,
+    manualPrice: null,
+  },
+];
