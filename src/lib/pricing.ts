@@ -124,7 +124,7 @@ export interface PricingBreakdown {
   suggestedPrice: number;
   finalPrice: number;
   manualPrice: boolean;
-  priceLines: BreakdownLine[];
+  manualAdjustment: number;
   marginLines: BreakdownLine[];
   realizedMarginPct: number;
 }
