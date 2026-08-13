@@ -135,18 +135,18 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <InlineNumberField
-                        ariaLabel={`Margem alvo de ${p.name}`}
-                        value={p.marginPct}
-                        suffix="%"
-                        onChange={(v) => onUpdate(p.id, { marginPct: v })}
-                      />
+                    <div className="flex items-center justify-end">
                       <MarginBadge value={margin} />
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-col items-end">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {manual && (
+                        <PencilLine
+                          className="size-3.5 text-muted-foreground"
+                          aria-label="Preço ajustado manualmente"
+                        />
+                      )}
                       <InlineNumberField
                         ariaLabel={`Preço final de ${p.name}`}
                         value={price}
@@ -154,11 +154,9 @@ export function PricingTable({ products, onUpdate, onDelete }: Props) {
                         emphasis
                         onChange={(v) => onUpdate(p.id, { manualPrice: v })}
                       />
-                      <span className="pr-2 text-[11px] text-muted-foreground">
-                        {manual ? `Sugerido ${brl(suggested)}` : "Markup automático"}
-                      </span>
                     </div>
                   </td>
+
                   <td className="px-3 py-3">
                     <div className="flex justify-end gap-1">
                       {manual && (
