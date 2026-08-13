@@ -23,18 +23,30 @@ import { CashflowView } from "@/components/cashflow/cashflow-view";
 import { AuditView } from "@/components/audit/audit-view";
 
 import { creationEntry, diffProduct, type AuditEntry } from "@/lib/audit";
-import { roleLabel, type AppUser } from "@/lib/users";
+import { roleLabel, mockUsers, type AppUser } from "@/lib/users";
 import {
   brl,
   pct,
   realizedMarginPct,
   finalPrice,
   uid,
+  mockProducts,
   type Product,
   type ProductType,
 } from "@/lib/pricing";
-import type { InventoryItem, StockMovement, MovementType } from "@/lib/inventory";
-import type { Sale, CashTransaction } from "@/lib/sales";
+import {
+  initialInventory,
+  initialMovements,
+  type InventoryItem,
+  type StockMovement,
+  type MovementType,
+} from "@/lib/inventory";
+import {
+  initialSales,
+  initialCashTransactions,
+  type Sale,
+  type CashTransaction,
+} from "@/lib/sales";
 
 import { isSupabaseConfigured } from "@/lib/supabase";
 import {
@@ -82,14 +94,14 @@ function Index() {
   const [activeModule, setActiveModule] = useState<AppModule>("precificacao");
   const [loading, setLoading] = useState(true);
 
-  // Database State
-  const [products, setProducts] = useState<Product[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [cashTransactions, setCashTransactions] = useState<CashTransaction[]>([]);
-  const [users, setUsers] = useState<AppUser[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
+  // Database State (initialized with fallback data for immediate render)
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [movements, setMovements] = useState<StockMovement[]>(initialMovements);
+  const [sales, setSales] = useState<Sale[]>(initialSales);
+  const [cashTransactions, setCashTransactions] = useState<CashTransaction[]>(initialCashTransactions);
+  const [users, setUsers] = useState<AppUser[]>(mockUsers);
+  const [currentUserId, setCurrentUserId] = useState<string>(mockUsers[0]?.id || "usr-1");
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
   // Pricing Filter State

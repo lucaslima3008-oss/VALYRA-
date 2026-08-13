@@ -31,16 +31,25 @@ interface SidebarProps {
   unresolvedAudits?: number;
 }
 
+const fallbackUser: AppUser = {
+  id: "usr-default",
+  name: "Administrador",
+  email: "admin@empresa.com.br",
+  role: "admin",
+  status: "ativo",
+};
+
 export function Sidebar({
   activeModule,
   onSelectModule,
-  users,
+  users = [],
   currentUserId,
   onSelectUser,
   lowStockCount = 0,
 }: SidebarProps) {
-  const currentUser = users.find((u) => u.id === currentUserId) ?? users[0]!;
-  const isAdmin = currentUser?.role === "admin";
+  const currentUser = users.find((u) => u.id === currentUserId) || users[0] || fallbackUser;
+  const currentRole = currentUser.role || "admin";
+  const isAdmin = currentRole === "admin";
 
   const navigationItems = [
     {
@@ -187,22 +196,28 @@ export function Sidebar({
                   : "bg-amber-500/20 text-amber-300 border border-amber-500/30",
               )}
             >
-              {roleLabel[currentUser.role]}
+              {roleLabel[currentRole] || "Admin"}
             </span>
           </div>
 
           <div className="relative">
             <select
               aria-label="Alternar perfil de usuário"
-              value={currentUserId}
+              value={currentUser.id}
               onChange={(e) => onSelectUser(e.target.value)}
               className="w-full appearance-none rounded-lg border border-slate-700/80 bg-slate-950 px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 outline-none transition-colors hover:border-slate-600 focus:border-indigo-500"
             >
-              {users.map((u) => (
-                <option key={u.id} value={u.id} className="bg-slate-900 text-slate-100">
-                  {u.name} ({roleLabel[u.role]})
+              {users.length > 0 ? (
+                users.map((u) => (
+                  <option key={u.id} value={u.id} className="bg-slate-900 text-slate-100">
+                    {u.name} ({roleLabel[u.role] || u.role})
+                  </option>
+                ))
+              ) : (
+                <option value={fallbackUser.id} className="bg-slate-900 text-slate-100">
+                  {fallbackUser.name} ({roleLabel[fallbackUser.role]})
                 </option>
-              ))}
+              )}
             </select>
             <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">
               ▼
