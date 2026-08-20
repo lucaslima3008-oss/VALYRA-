@@ -9,11 +9,13 @@ import {
   ShieldCheck,
   Building2,
   ChevronRight,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { roleLabel, type AppUser } from "@/lib/users";
 
 export type AppModule =
+  | "produtos"
   | "precificacao"
   | "estoque"
   | "vendas"
@@ -52,6 +54,12 @@ export function Sidebar({
   const isAdmin = currentRole === "admin";
 
   const navigationItems = [
+    {
+      id: "produtos" as AppModule,
+      label: "Produtos",
+      icon: Package,
+      description: "Cadastro e fichas técnicas",
+    },
     {
       id: "precificacao" as AppModule,
       label: "Precificação",

@@ -2,8 +2,6 @@ import {
   Factory,
   Store,
   RotateCcw,
-  Trash2,
-  PencilLine,
   Tags,
   Calculator,
 } from "lucide-react";
@@ -36,8 +34,6 @@ interface Props {
   auditLog: AuditEntry[];
   canEdit: boolean;
   onUpdate: (id: string, patch: Partial<Product>, reason?: string) => void;
-  onEdit: (product: Product) => void;
-  onDelete: (id: string) => void;
 }
 
 function MarginBadge({ value }: { value: number }) {
@@ -198,8 +194,6 @@ export function PricingTable({
   auditLog,
   canEdit,
   onUpdate,
-  onEdit,
-  onDelete,
 }: Props) {
   if (products.length === 0) {
     return (
@@ -347,18 +341,6 @@ export function PricingTable({
                         product={p}
                         entries={auditLog.filter((e) => e.productId === p.id)}
                       />
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Editar produto"
-                          title="Editar produto e parâmetros"
-                          className="size-8 text-muted-foreground hover:text-foreground"
-                          onClick={() => onEdit(p)}
-                        >
-                          <PencilLine className="size-4" />
-                        </Button>
-                      )}
                       {canEdit && manual && (
                         <Button
                           variant="ghost"
@@ -369,17 +351,6 @@ export function PricingTable({
                           onClick={() => onUpdate(p.id, { manualPrice: null })}
                         >
                           <RotateCcw className="size-4" />
-                        </Button>
-                      )}
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Remover produto"
-                          className="size-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => onDelete(p.id)}
-                        >
-                          <Trash2 className="size-4" />
                         </Button>
                       )}
                     </div>

@@ -39,8 +39,9 @@ interface InventoryViewProps {
     type: MovementType,
     reason: string,
     user: string,
+    supplierCost?: number,
+    freightCost?: number,
   ) => void;
-  onCreateItem: (item: InventoryItem) => void;
 }
 
 export function InventoryView({
@@ -49,27 +50,21 @@ export function InventoryView({
   canManage,
   currentUserName,
   onUpdateStock,
-  onCreateItem,
 }: InventoryViewProps) {
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"todos" | StockItemType>("todos");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [movementModalOpen, setMovementModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Movement Form state
   const [movType, setMovType] = useState<MovementType>("entrada");
   const [movQuantity, setMovQuantity] = useState("1");
   const [movReason, setMovReason] = useState("");
+  const [movSupplierCost, setMovSupplierCost] = useState("");
+  const [movFreightCost, setMovFreightCost] = useState("");
 
-  // Create Item Form state
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemType, setNewItemType] = useState<StockItemType>("produto_final");
-  const [newItemStock, setNewItemStock] = useState("10");
-  const [newItemMinStock, setNewItemMinStock] = useState("5");
-  const [newItemUnit, setNewItemUnit] = useState("un");
-  const [newItemUnitCost, setNewItemUnitCost] = useState("10.00");
+
 
   const filteredItems = useMemo(() => {
     return inventory.filter((item) => {
@@ -96,6 +91,8 @@ export function InventoryView({
     setMovType("entrada");
     setMovQuantity("1");
     setMovReason("");
+    setMovSupplierCost("");
+    setMovFreightCost("");
     setMovementModalOpen(true);
   };
 
@@ -105,35 +102,22 @@ export function InventoryView({
     const qty = parseFloat(movQuantity) || 0;
     if (qty <= 0) return;
 
+    const supplierCost = movType === "entrada" ? (parseFloat(movSupplierCost) || undefined) : undefined;
+    const freightCost = movType === "entrada" ? (parseFloat(movFreightCost) || undefined) : undefined;
+
     onUpdateStock(
       selectedItem.id,
       qty,
       movType,
       movReason || `Ajuste manual (${movType})`,
       currentUserName,
+      supplierCost,
+      freightCost,
     );
     setMovementModalOpen(false);
   };
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemName.trim()) return;
 
-    const newItem: InventoryItem = {
-      id: uid(),
-      name: newItemName.trim(),
-      type: newItemType,
-      currentStock: parseFloat(newItemStock) || 0,
-      minStock: parseFloat(newItemMinStock) || 0,
-      unit: newItemUnit.trim() || "un",
-      unitCost: parseFloat(newItemUnitCost) || 0,
-      lastUpdated: new Date().toISOString(),
-    };
-
-    onCreateItem(newItem);
-    setCreateModalOpen(false);
-    setNewItemName("");
-  };
 
   return (
     <div className="space-y-6">
@@ -156,15 +140,6 @@ export function InventoryView({
           >
             <History className="size-4 text-slate-500" />
             Histórico de Movimentações
-          </Button>
-
-          <Button
-            disabled={!canManage}
-            onClick={() => setCreateModalOpen(true)}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            <Plus className="size-4" />
-            Novo Item no Estoque
           </Button>
         </div>
       </div>
@@ -422,6 +397,36 @@ export function InventoryView({
               />
             </div>
 
+            {movType === "entrada" && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 space-y-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">Custos de Aquisição do Lote</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Preço Pago ao Fornecedor (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00"
+                      value={movSupplierCost}
+                      onChange={(e) => setMovSupplierCost(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Frete e Despesas (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00"
+                      value={movFreightCost}
+                      onChange={(e) => setMovFreightCost(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label>Motivo / Observação</Label>
               <Input
@@ -512,95 +517,6 @@ export function InventoryView({
         </DialogContent>
       </Dialog>
 
-      {/* Modal Criar Novo Item de Estoque */}
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Novo Item no Estoque</DialogTitle>
-            <DialogDescription>
-              Adicione insumos, embalagens ou produtos finais para controle de saldo.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleCreateSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Nome do Item</Label>
-              <Input
-                required
-                placeholder="Ex: Embalagem rígida, Farinha especial..."
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Tipo de Item</Label>
-              <select
-                value={newItemType}
-                onChange={(e) => setNewItemType(e.target.value as StockItemType)}
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              >
-                <option value="produto_final">Produto Final para Venda</option>
-                <option value="insumo">Insumo / Matéria-Prima / Embalagem</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Saldo Inicial</Label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={newItemStock}
-                  onChange={(e) => setNewItemStock(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Estoque Mínimo</Label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={newItemMinStock}
-                  onChange={(e) => setNewItemMinStock(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Unidade de Medida</Label>
-                <Input
-                  placeholder="un, kg, g, ml, L"
-                  value={newItemUnit}
-                  onChange={(e) => setNewItemUnit(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Custo Unitário (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={newItemUnitCost}
-                  onChange={(e) => setNewItemUnitCost(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" className="bg-indigo-600 text-white hover:bg-indigo-700">
-                Cadastrar Item
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

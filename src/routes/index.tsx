@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Search,
-  Plus,
   Layers,
   TrendingUp,
   AlertTriangle,
@@ -15,8 +14,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Sidebar, type AppModule } from "@/components/layout/sidebar";
 import { PricingTable } from "@/components/pricing/pricing-table";
-import { ProductSheet } from "@/components/pricing/product-sheet";
 import { UsersPanel } from "@/components/pricing/users-panel";
+import { ProductsView } from "@/components/products/products-view";
 import { InventoryView } from "@/components/inventory/inventory-view";
 import { PosView } from "@/components/pos/pos-view";
 import { CashflowView } from "@/components/cashflow/cashflow-view";
@@ -91,7 +90,7 @@ type Filter = "todos" | ProductType;
 
 function Index() {
   // Global Navigation
-  const [activeModule, setActiveModule] = useState<AppModule>("precificacao");
+  const [activeModule, setActiveModule] = useState<AppModule>("produtos");
   const [loading, setLoading] = useState(true);
 
   // Database State (initialized with fallback data for immediate render)
@@ -107,8 +106,6 @@ function Index() {
   // Pricing Filter State
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("todos");
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null);
 
   // 1. Initial Load from Supabase
   const loadAllData = async () => {
@@ -249,6 +246,8 @@ function Index() {
     type: MovementType,
     reason: string,
     user: string,
+    supplierCost?: number,
+    freightCost?: number,
   ) => {
     setInventory((prev) =>
       prev.map((item) => {
@@ -260,9 +259,17 @@ function Index() {
             ? Math.max(0, item.currentStock - delta)
             : delta;
 
+        // Update unit cost if supplier cost is provided on entry
+        let newUnitCost = item.unitCost;
+        if (type === "entrada" && supplierCost !== undefined && delta > 0) {
+          const totalAcquisition = supplierCost + (freightCost || 0);
+          newUnitCost = totalAcquisition / delta;
+        }
+
         const updatedItem = {
           ...item,
           currentStock: nextStock,
+          unitCost: newUnitCost,
           lastUpdated: new Date().toISOString(),
         };
 
@@ -285,25 +292,6 @@ function Index() {
         return updatedItem;
       }),
     );
-  };
-
-  const handleCreateInventoryItem = (item: InventoryItem) => {
-    setInventory((prev) => [item, ...prev]);
-    saveSupabaseInventoryItem(item);
-
-    const mov: StockMovement = {
-      id: uid(),
-      itemId: item.id,
-      itemName: item.name,
-      type: "entrada",
-      quantity: item.currentStock,
-      balanceAfter: item.currentStock,
-      reason: "Cadastro inicial no estoque",
-      date: new Date().toISOString(),
-      user: currentUser.name,
-    };
-    setMovements((movs) => [mov, ...movs]);
-    recordSupabaseMovement(mov);
   };
 
   // POS / Sales Checkout with automated stock deduction & cash flow integration
@@ -432,8 +420,10 @@ function Index() {
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white capitalize">
-              {activeModule === "precificacao"
-                ? "Precificação & Portfólio"
+              {activeModule === "produtos"
+                ? "Cadastro de Produtos"
+                : activeModule === "precificacao"
+                ? "Precificação & Margens"
                 : activeModule === "estoque"
                 ? "Controle de Estoque"
                 : activeModule === "vendas"
@@ -480,24 +470,22 @@ function Index() {
               </span>
             )}
 
-            {activeModule === "precificacao" && (
-              <Button
-                size="sm"
-                disabled={!canEdit}
-                onClick={() => {
-                  setEditing(null);
-                  setSheetOpen(true);
-                }}
-                className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
-              >
-                <Plus className="size-4" /> Novo Produto
-              </Button>
-            )}
+
           </div>
         </header>
 
         {/* Dynamic Main Body Content */}
         <main className="flex-1 p-8">
+          {/* TAB 0: PRODUTOS (CADASTRO) */}
+          {activeModule === "produtos" && (
+            <ProductsView
+              products={products}
+              canEdit={canEdit}
+              onSaveProduct={(p, reason) => commitProduct(p, reason || "Alteração via cadastro de produtos")}
+              onDeleteProduct={removeProduct}
+            />
+          )}
+
           {/* TAB 1: PRECIFICAÇÃO */}
           {activeModule === "precificacao" && (
             <div className="space-y-6">
@@ -551,11 +539,6 @@ function Index() {
                   auditLog={auditLog}
                   canEdit={canEdit}
                   onUpdate={updateProduct}
-                  onEdit={(p) => {
-                    setEditing(p);
-                    setSheetOpen(true);
-                  }}
-                  onDelete={removeProduct}
                 />
               </div>
 
@@ -575,7 +558,6 @@ function Index() {
               canManage={canEdit}
               currentUserName={currentUser.name}
               onUpdateStock={handleUpdateStock}
-              onCreateItem={handleCreateInventoryItem}
             />
           )}
 
@@ -616,16 +598,6 @@ function Index() {
         </main>
       </div>
 
-      {/* Product Drawer Sheet (for New/Edit product) */}
-      <ProductSheet
-        open={sheetOpen}
-        onOpenChange={(o) => {
-          setSheetOpen(o);
-          if (!o) setEditing(null);
-        }}
-        product={editing}
-        onSave={(p, reason) => commitProduct(p, reason || "Alteração manual pelo painel de edição")}
-      />
     </div>
   );
 }
