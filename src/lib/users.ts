@@ -26,18 +26,4 @@ export const emptyUser = (): AppUser => ({
 
 export const mockUsers: AppUser[] = [
   { id: "u1", name: "Lucas Lima", email: "lucas.lima@costprice.com", role: "admin", status: "ativo" },
-  {
-    id: "u2",
-    name: "Marina Duarte",
-    email: "marina.duarte@costprice.com",
-    role: "operacional",
-    status: "ativo",
-  },
-  {
-    id: "u3",
-    name: "Rafael Antunes",
-    email: "rafael.antunes@costprice.com",
-    role: "operacional",
-    status: "inativo",
-  },
 ];
