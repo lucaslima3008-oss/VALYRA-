@@ -19,6 +19,7 @@ export interface BomItem {
 export interface Product {
   id: string;
   name: string;
+  description?: string;
   type: ProductType;
   // Fabricado
   bom: BomItem[];
