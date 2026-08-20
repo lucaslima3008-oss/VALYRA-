@@ -42,6 +42,6 @@ export interface CashTransaction {
   saleId?: string;
 }
 
-export const initialSales: Sale[]] = [];
+export const initialSales: Sale[] = [];
 
-export const initialCashTransactions: CashTransaction[]] = [];
+export const initialCashTransactions: CashTransaction[] = [];

@@ -236,4 +236,4 @@ export const brl = (v: number) =>
 
 export const pct = (v: number) => `${v.toFixed(1).replace(".", ",")}%`;
 
-export const mockProducts: Product[]] = [];
+export const mockProducts: Product[] = [];

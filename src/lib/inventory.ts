@@ -27,6 +27,6 @@ export interface StockMovement {
   user: string;
 }
 
-export const initialInventory: InventoryItem[]] = [];
+export const initialInventory: InventoryItem[] = [];
 
-export const initialMovements: StockMovement[]] = [];
+export const initialMovements: StockMovement[] = [];
