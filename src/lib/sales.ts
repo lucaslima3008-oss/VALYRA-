@@ -42,6 +42,10 @@ export interface Sale {
   marginRealizedPct: number;
   user: string;
   date: string;
+  /** Cobrança online (Mercado Pago) */
+  paymentStatus?: PaymentStatus;
+  paymentLink?: string;
+  preferenceId?: string;
 }
 
 export type TransactionType = "entrada" | "saida";
