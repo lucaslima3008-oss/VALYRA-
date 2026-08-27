@@ -13,6 +13,9 @@ import {
   Percent,
   Layers,
   ArrowRight,
+  Link2,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,9 +29,11 @@ import {
 import { cn } from "@/lib/utils";
 import { brl, pct, finalPrice, totalCost, type Product } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/audit";
-import type { Sale, PaymentMethod, SaleItem } from "@/lib/sales";
+import type { Sale, PaymentMethod, SaleItem, PaymentStatus } from "@/lib/sales";
 import type { InventoryItem } from "@/lib/inventory";
 import { uid } from "@/lib/pricing";
+import { createCharge } from "@/lib/mercadopago.functions";
+import { ChargeDialog, PaymentStatusBadge } from "@/components/pos/charge-dialog";
 
 interface PosViewProps {
   products: Product[];
@@ -36,6 +41,7 @@ interface PosViewProps {
   sales: Sale[];
   currentUserName: string;
   onCompleteSale: (sale: Sale) => void;
+  onUpdateSaleStatus: (saleCode: string, status: PaymentStatus) => void;
 }
 
 export function PosView({
@@ -44,6 +50,7 @@ export function PosView({
   sales,
   currentUserName,
   onCompleteSale,
+  onUpdateSaleStatus,
 }: PosViewProps) {
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"todos" | "fabricado" | "revenda">("todos");
@@ -52,6 +59,10 @@ export function PosView({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [successSale, setSuccessSale] = useState<Sale | null>(null);
   const [recentSalesOpen, setRecentSalesOpen] = useState(false);
+  const [chargeSale, setChargeSale] = useState<Sale | null>(null);
+  const [chargeOpen, setChargeOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [chargeError, setChargeError] = useState<string | null>(null);
 
   // Filter products
   const filteredProducts = useMemo(() => {
