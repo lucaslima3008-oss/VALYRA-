@@ -574,6 +574,29 @@ export function PosView({
               <CheckCircle2 className="size-5" />
               Finalizar Venda &amp; Baixar Estoque
             </Button>
+
+            {/* Cobrança online (Mercado Pago) */}
+            <Button
+              size="lg"
+              variant="outline"
+              disabled={cart.length === 0 || generating}
+              onClick={() => void handleGenerateCharge()}
+              className="mt-2 w-full gap-2 border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-950 text-sm font-semibold"
+            >
+              {generating ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+              {generating ? "Gerando cobrança..." : "Gerar Cobrança (Mercado Pago)"}
+            </Button>
+            <p className="mt-1.5 text-center text-[11px] text-slate-400">
+              Gera link e QR Code para o cliente pagar por fora. O estoque e o caixa só são baixados
+              quando o pagamento é confirmado.
+            </p>
+
+            {chargeError && (
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-[11px] text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                {chargeError}
+              </div>
+            )}
           </div>
         </div>
       </div>
