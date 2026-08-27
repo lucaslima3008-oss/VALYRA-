@@ -294,12 +294,8 @@ function Index() {
     );
   };
 
-  // POS / Sales Checkout with automated stock deduction & cash flow integration
-  const handleCompleteSale = async (sale: Sale) => {
-    // 1. Persist sale
-    setSales((prev) => [sale, ...prev]);
-    await saveSupabaseSale(sale);
-
+  // Efeitos financeiros/operacionais de uma venda confirmada
+  const applySaleEffects = async (sale: Sale) => {
     // 2. Persist cashflow transaction
     const newTx: CashTransaction = {
       id: uid(),
