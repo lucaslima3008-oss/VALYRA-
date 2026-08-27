@@ -21,7 +21,8 @@ export type AppModule =
   | "vendas"
   | "fluxo_caixa"
   | "usuarios"
-  | "auditoria";
+  | "auditoria"
+  | "configuracoes";
 
 interface SidebarProps {
   activeModule: AppModule;
