@@ -99,6 +99,16 @@ export function Sidebar({
       icon: History,
       description: "Histórico de alterações",
     },
+    ...(isAdmin
+      ? [
+          {
+            id: "configuracoes" as AppModule,
+            label: "Configurações",
+            icon: Settings,
+            description: "Integrações e pagamentos",
+          },
+        ]
+      : []),
   ];
 
   return (
