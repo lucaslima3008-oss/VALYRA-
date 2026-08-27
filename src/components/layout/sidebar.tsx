@@ -10,6 +10,7 @@ import {
   Building2,
   ChevronRight,
   Package,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { roleLabel, type AppUser } from "@/lib/users";
@@ -21,7 +22,8 @@ export type AppModule =
   | "vendas"
   | "fluxo_caixa"
   | "usuarios"
-  | "auditoria";
+  | "auditoria"
+  | "configuracoes";
 
 interface SidebarProps {
   activeModule: AppModule;
@@ -98,6 +100,16 @@ export function Sidebar({
       icon: History,
       description: "Histórico de alterações",
     },
+    ...(isAdmin
+      ? [
+          {
+            id: "configuracoes" as AppModule,
+            label: "Configurações",
+            icon: Settings,
+            description: "Integrações e pagamentos",
+          },
+        ]
+      : []),
   ];
 
   return (

@@ -20,6 +20,7 @@ import { InventoryView } from "@/components/inventory/inventory-view";
 import { PosView } from "@/components/pos/pos-view";
 import { CashflowView } from "@/components/cashflow/cashflow-view";
 import { AuditView } from "@/components/audit/audit-view";
+import { SettingsView } from "@/components/settings/settings-view";
 
 import { creationEntry, diffProduct, type AuditEntry } from "@/lib/audit";
 import { roleLabel, mockUsers, type AppUser } from "@/lib/users";
@@ -45,6 +46,7 @@ import {
   initialCashTransactions,
   type Sale,
   type CashTransaction,
+  type PaymentStatus,
 } from "@/lib/sales";
 
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -58,6 +60,7 @@ import {
   recordSupabaseMovement,
   fetchSupabaseSales,
   saveSupabaseSale,
+  updateSupabaseSalePayment,
   fetchSupabaseCashflow,
   saveSupabaseCashTransaction,
   fetchSupabaseUsers,
@@ -294,12 +297,8 @@ function Index() {
     );
   };
 
-  // POS / Sales Checkout with automated stock deduction & cash flow integration
-  const handleCompleteSale = async (sale: Sale) => {
-    // 1. Persist sale
-    setSales((prev) => [sale, ...prev]);
-    await saveSupabaseSale(sale);
-
+  // Efeitos financeiros/operacionais de uma venda confirmada
+  const applySaleEffects = async (sale: Sale) => {
     // 2. Persist cashflow transaction
     const newTx: CashTransaction = {
       id: uid(),
@@ -369,6 +368,31 @@ function Index() {
     });
   };
 
+  // POS / Sales Checkout — vendas com cobrança online só geram efeitos após a confirmação
+  const handleCompleteSale = async (sale: Sale) => {
+    setSales((prev) => [sale, ...prev]);
+    await saveSupabaseSale(sale);
+
+    const awaitingPayment = sale.paymentStatus === "pendente";
+    if (!awaitingPayment) await applySaleEffects(sale);
+  };
+
+  // Atualização de status vinda do Mercado Pago (webhook/realtime/polling)
+  const handleUpdateSaleStatus = async (saleCode: string, status: PaymentStatus) => {
+    const target = sales.find((s) => s.code === saleCode);
+    if (!target || target.paymentStatus === status) return;
+
+    setSales((prev) =>
+      prev.map((s) => (s.code === saleCode ? { ...s, paymentStatus: status } : s)),
+    );
+    await updateSupabaseSalePayment(saleCode, status);
+
+    if (status === "pago" && target.paymentStatus !== "pago") {
+      await applySaleEffects({ ...target, paymentStatus: "pago" });
+    }
+  };
+
+
   // Cashflow handler
   const handleAddTransaction = async (tx: CashTransaction) => {
     setCashTransactions((prev) => [tx, ...prev]);
@@ -432,6 +456,8 @@ function Index() {
                 ? "Fluxo de Caixa"
                 : activeModule === "usuarios"
                 ? "Gestão de Usuários"
+                : activeModule === "configuracoes"
+                ? "Configurações & Integrações"
                 : "Histórico de Auditoria"}
             </h1>
             <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -569,6 +595,7 @@ function Index() {
               sales={sales}
               currentUserName={currentUser.name}
               onCompleteSale={handleCompleteSale}
+              onUpdateSaleStatus={handleUpdateSaleStatus}
             />
           )}
 
@@ -595,6 +622,9 @@ function Index() {
 
           {/* TAB 6: AUDITORIA */}
           {activeModule === "auditoria" && <AuditView entries={auditLog} />}
+
+          {/* TAB 7: CONFIGURAÇÕES */}
+          {activeModule === "configuracoes" && <SettingsView isAdmin={currentUser.role === "admin"} />}
         </main>
       </div>
 

@@ -13,6 +13,9 @@ import {
   Percent,
   Layers,
   ArrowRight,
+  Link2,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,9 +29,11 @@ import {
 import { cn } from "@/lib/utils";
 import { brl, pct, finalPrice, totalCost, type Product } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/audit";
-import type { Sale, PaymentMethod, SaleItem } from "@/lib/sales";
+import type { Sale, PaymentMethod, SaleItem, PaymentStatus } from "@/lib/sales";
 import type { InventoryItem } from "@/lib/inventory";
 import { uid } from "@/lib/pricing";
+import { createCharge } from "@/lib/mercadopago.functions";
+import { ChargeDialog, PaymentStatusBadge } from "@/components/pos/charge-dialog";
 
 interface PosViewProps {
   products: Product[];
@@ -36,6 +41,7 @@ interface PosViewProps {
   sales: Sale[];
   currentUserName: string;
   onCompleteSale: (sale: Sale) => void;
+  onUpdateSaleStatus: (saleCode: string, status: PaymentStatus) => void;
 }
 
 export function PosView({
@@ -44,6 +50,7 @@ export function PosView({
   sales,
   currentUserName,
   onCompleteSale,
+  onUpdateSaleStatus,
 }: PosViewProps) {
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"todos" | "fabricado" | "revenda">("todos");
@@ -52,6 +59,10 @@ export function PosView({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [successSale, setSuccessSale] = useState<Sale | null>(null);
   const [recentSalesOpen, setRecentSalesOpen] = useState(false);
+  const [chargeSale, setChargeSale] = useState<Sale | null>(null);
+  const [chargeOpen, setChargeOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [chargeError, setChargeError] = useState<string | null>(null);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -130,9 +141,7 @@ export function PosView({
   const grossProfit = netRevenue - totalCostValue;
   const realizedMargin = total > 0 ? (grossProfit / total) * 100 : 0;
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
-
+  const buildSale = (method: PaymentMethod, extra: Partial<Sale> = {}): Sale => {
     const saleItems: SaleItem[] = cart.map((item) => ({
       productId: item.product.id,
       name: item.product.name,
@@ -143,28 +152,88 @@ export function PosView({
     }));
 
     const saleCode = `VND-${new Date().getFullYear()}-${String(sales.length + 1).padStart(3, "0")}`;
+    const fee = method === "mercado_pago" ? 0 : cardFeePct;
+    const feeAmount = (total * fee) / 100;
 
-    const newSale: Sale = {
+    return {
       id: uid(),
       code: saleCode,
       items: saleItems,
       subtotal,
       discount: discountValue,
       total,
-      paymentMethod,
-      cardFeePct,
-      cardFeeAmount,
-      netRevenue,
+      paymentMethod: method,
+      cardFeePct: fee,
+      cardFeeAmount: feeAmount,
+      netRevenue: total - feeAmount,
       totalCost: totalCostValue,
-      grossProfit,
-      marginRealizedPct: realizedMargin,
+      grossProfit: total - feeAmount - totalCostValue,
+      marginRealizedPct: total > 0 ? ((total - feeAmount - totalCostValue) / total) * 100 : 0,
       user: currentUserName,
       date: new Date().toISOString(),
+      ...extra,
     };
+  };
 
+  const handleCheckout = () => {
+    if (cart.length === 0) return;
+    const newSale = buildSale(paymentMethod);
     onCompleteSale(newSale);
     setSuccessSale(newSale);
     clearCart();
+  };
+
+  /** Gera a cobrança no Mercado Pago (Checkout Pro) sem processar cartão aqui. */
+  const handleGenerateCharge = async () => {
+    if (cart.length === 0 || generating) return;
+    setChargeError(null);
+    setGenerating(true);
+
+    const pendingSale = buildSale("mercado_pago", { paymentStatus: "pendente" });
+
+    try {
+      const res = await createCharge({
+        data: {
+          saleCode: pendingSale.code,
+          items: cart.map((item) => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            unitPrice: finalPrice(item.product),
+          })),
+          discount: discountValue,
+        },
+      });
+
+      if (!res.ok) {
+        setChargeError(res.error);
+        return;
+      }
+
+      const saleWithLink: Sale = {
+        ...pendingSale,
+        paymentLink: res.initPoint,
+        preferenceId: res.preferenceId,
+      };
+
+      onCompleteSale(saleWithLink);
+      setChargeSale(saleWithLink);
+      setChargeOpen(true);
+      clearCart();
+    } catch (err) {
+      setChargeError(err instanceof Error ? err.message : "Falha ao gerar cobrança.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleStatusChange = (saleCode: string, status: PaymentStatus) => {
+    setChargeSale((prev) => (prev && prev.code === saleCode ? { ...prev, paymentStatus: status } : prev));
+    onUpdateSaleStatus(saleCode, status);
+  };
+
+  const openCharge = (sale: Sale) => {
+    setChargeSale(sale);
+    setChargeOpen(true);
   };
 
   return (
@@ -505,6 +574,29 @@ export function PosView({
               <CheckCircle2 className="size-5" />
               Finalizar Venda &amp; Baixar Estoque
             </Button>
+
+            {/* Cobrança online (Mercado Pago) */}
+            <Button
+              size="lg"
+              variant="outline"
+              disabled={cart.length === 0 || generating}
+              onClick={() => void handleGenerateCharge()}
+              className="mt-2 w-full gap-2 border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-950 text-sm font-semibold"
+            >
+              {generating ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+              {generating ? "Gerando cobrança..." : "Gerar Cobrança (Mercado Pago)"}
+            </Button>
+            <p className="mt-1.5 text-center text-[11px] text-slate-400">
+              Gera link e QR Code para o cliente pagar por fora. O estoque e o caixa só são baixados
+              quando o pagamento é confirmado.
+            </p>
+
+            {chargeError && (
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-[11px] text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                {chargeError}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -602,9 +694,21 @@ export function PosView({
                       {s.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")}
                     </td>
                     <td className="px-3 py-2">
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {s.paymentMethod}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {s.paymentMethod === "mercado_pago" ? "Mercado Pago" : s.paymentMethod}
+                        </span>
+                        <PaymentStatusBadge status={s.paymentStatus} />
+                        {s.paymentLink && (
+                          <button
+                            onClick={() => openCharge(s)}
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 hover:underline"
+                          >
+                            <Link2 className="size-3" />
+                            Ver cobrança
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-right font-bold text-slate-900 dark:text-white tabular-nums">
                       {brl(s.total)}
@@ -623,6 +727,16 @@ export function PosView({
           </div>
         </DialogContent>
       </Dialog>
+
+      <ChargeDialog
+        sale={chargeSale}
+        open={chargeOpen}
+        onOpenChange={(o) => {
+          setChargeOpen(o);
+          if (!o) setChargeSale(null);
+        }}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 }
