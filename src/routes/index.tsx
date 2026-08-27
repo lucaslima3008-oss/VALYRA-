@@ -365,6 +365,31 @@ function Index() {
     });
   };
 
+  // POS / Sales Checkout — vendas com cobrança online só geram efeitos após a confirmação
+  const handleCompleteSale = async (sale: Sale) => {
+    setSales((prev) => [sale, ...prev]);
+    await saveSupabaseSale(sale);
+
+    const awaitingPayment = sale.paymentStatus === "pendente";
+    if (!awaitingPayment) await applySaleEffects(sale);
+  };
+
+  // Atualização de status vinda do Mercado Pago (webhook/realtime/polling)
+  const handleUpdateSaleStatus = async (saleCode: string, status: PaymentStatus) => {
+    const target = sales.find((s) => s.code === saleCode);
+    if (!target || target.paymentStatus === status) return;
+
+    setSales((prev) =>
+      prev.map((s) => (s.code === saleCode ? { ...s, paymentStatus: status } : s)),
+    );
+    await updateSupabaseSalePayment(saleCode, status);
+
+    if (status === "pago" && target.paymentStatus !== "pago") {
+      await applySaleEffects({ ...target, paymentStatus: "pago" });
+    }
+  };
+
+
   // Cashflow handler
   const handleAddTransaction = async (tx: CashTransaction) => {
     setCashTransactions((prev) => [tx, ...prev]);
