@@ -10,6 +10,7 @@ import {
   Building2,
   ChevronRight,
   Package,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { roleLabel, type AppUser } from "@/lib/users";
