@@ -141,9 +141,7 @@ export function PosView({
   const grossProfit = netRevenue - totalCostValue;
   const realizedMargin = total > 0 ? (grossProfit / total) * 100 : 0;
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
-
+  const buildSale = (method: PaymentMethod, extra: Partial<Sale> = {}): Sale => {
     const saleItems: SaleItem[] = cart.map((item) => ({
       productId: item.product.id,
       name: item.product.name,
@@ -154,28 +152,88 @@ export function PosView({
     }));
 
     const saleCode = `VND-${new Date().getFullYear()}-${String(sales.length + 1).padStart(3, "0")}`;
+    const fee = method === "mercado_pago" ? 0 : cardFeePct;
+    const feeAmount = (total * fee) / 100;
 
-    const newSale: Sale = {
+    return {
       id: uid(),
       code: saleCode,
       items: saleItems,
       subtotal,
       discount: discountValue,
       total,
-      paymentMethod,
-      cardFeePct,
-      cardFeeAmount,
-      netRevenue,
+      paymentMethod: method,
+      cardFeePct: fee,
+      cardFeeAmount: feeAmount,
+      netRevenue: total - feeAmount,
       totalCost: totalCostValue,
-      grossProfit,
-      marginRealizedPct: realizedMargin,
+      grossProfit: total - feeAmount - totalCostValue,
+      marginRealizedPct: total > 0 ? ((total - feeAmount - totalCostValue) / total) * 100 : 0,
       user: currentUserName,
       date: new Date().toISOString(),
+      ...extra,
     };
+  };
 
+  const handleCheckout = () => {
+    if (cart.length === 0) return;
+    const newSale = buildSale(paymentMethod);
     onCompleteSale(newSale);
     setSuccessSale(newSale);
     clearCart();
+  };
+
+  /** Gera a cobrança no Mercado Pago (Checkout Pro) sem processar cartão aqui. */
+  const handleGenerateCharge = async () => {
+    if (cart.length === 0 || generating) return;
+    setChargeError(null);
+    setGenerating(true);
+
+    const pendingSale = buildSale("mercado_pago", { paymentStatus: "pendente" });
+
+    try {
+      const res = await createCharge({
+        data: {
+          saleCode: pendingSale.code,
+          items: cart.map((item) => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            unitPrice: finalPrice(item.product),
+          })),
+          discount: discountValue,
+        },
+      });
+
+      if (!res.ok) {
+        setChargeError(res.error);
+        return;
+      }
+
+      const saleWithLink: Sale = {
+        ...pendingSale,
+        paymentLink: res.initPoint,
+        preferenceId: res.preferenceId,
+      };
+
+      onCompleteSale(saleWithLink);
+      setChargeSale(saleWithLink);
+      setChargeOpen(true);
+      clearCart();
+    } catch (err) {
+      setChargeError(err instanceof Error ? err.message : "Falha ao gerar cobrança.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleStatusChange = (saleCode: string, status: PaymentStatus) => {
+    setChargeSale((prev) => (prev && prev.code === saleCode ? { ...prev, paymentStatus: status } : prev));
+    onUpdateSaleStatus(saleCode, status);
+  };
+
+  const openCharge = (sale: Sale) => {
+    setChargeSale(sale);
+    setChargeOpen(true);
   };
 
   return (
