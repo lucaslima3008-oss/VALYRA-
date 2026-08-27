@@ -20,6 +20,7 @@ import { InventoryView } from "@/components/inventory/inventory-view";
 import { PosView } from "@/components/pos/pos-view";
 import { CashflowView } from "@/components/cashflow/cashflow-view";
 import { AuditView } from "@/components/audit/audit-view";
+import { SettingsView } from "@/components/settings/settings-view";
 
 import { creationEntry, diffProduct, type AuditEntry } from "@/lib/audit";
 import { roleLabel, mockUsers, type AppUser } from "@/lib/users";
@@ -45,6 +46,7 @@ import {
   initialCashTransactions,
   type Sale,
   type CashTransaction,
+  type PaymentStatus,
 } from "@/lib/sales";
 
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -58,6 +60,7 @@ import {
   recordSupabaseMovement,
   fetchSupabaseSales,
   saveSupabaseSale,
+  updateSupabaseSalePayment,
   fetchSupabaseCashflow,
   saveSupabaseCashTransaction,
   fetchSupabaseUsers,
@@ -453,6 +456,8 @@ function Index() {
                 ? "Fluxo de Caixa"
                 : activeModule === "usuarios"
                 ? "Gestão de Usuários"
+                : activeModule === "configuracoes"
+                ? "Configurações & Integrações"
                 : "Histórico de Auditoria"}
             </h1>
             <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -590,6 +595,7 @@ function Index() {
               sales={sales}
               currentUserName={currentUser.name}
               onCompleteSale={handleCompleteSale}
+              onUpdateSaleStatus={handleUpdateSaleStatus}
             />
           )}
 
@@ -616,6 +622,9 @@ function Index() {
 
           {/* TAB 6: AUDITORIA */}
           {activeModule === "auditoria" && <AuditView entries={auditLog} />}
+
+          {/* TAB 7: CONFIGURAÇÕES */}
+          {activeModule === "configuracoes" && <SettingsView isAdmin={currentUser.role === "admin"} />}
         </main>
       </div>
 
