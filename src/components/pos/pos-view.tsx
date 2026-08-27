@@ -727,6 +727,16 @@ export function PosView({
           </div>
         </DialogContent>
       </Dialog>
+
+      <ChargeDialog
+        sale={chargeSale}
+        open={chargeOpen}
+        onOpenChange={(o) => {
+          setChargeOpen(o);
+          if (!o) setChargeSale(null);
+        }}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 }
