@@ -30,26 +30,34 @@ export async function createPreference(params: {
   notificationUrl: string;
   backUrl?: string;
 }): Promise<{ id: string; init_point: string; sandbox_init_point?: string }> {
+  const baseUrl = params.backUrl?.replace(/\/$/, "");
+  const backUrls = baseUrl
+    ? { success: `${baseUrl}/`, pending: `${baseUrl}/`, failure: `${baseUrl}/` }
+    : undefined;
+
+  const body: Record<string, unknown> = {
+    items: params.items.map((i) => ({
+      title: i.title,
+      quantity: i.quantity,
+      unit_price: Number(i.unit_price.toFixed(2)),
+      currency_id: "BRL",
+    })),
+    external_reference: params.externalReference,
+    notification_url: params.notificationUrl,
+  };
+
+  if (backUrls) {
+    body["back_urls"] = backUrls;
+    body["auto_return"] = "approved";
+  }
+
   const res = await fetch(`${MP_API}/checkout/preferences`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getAccessToken()}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      items: params.items.map((i) => ({
-        title: i.title,
-        quantity: i.quantity,
-        unit_price: Number(i.unit_price.toFixed(2)),
-        currency_id: "BRL",
-      })),
-      external_reference: params.externalReference,
-      notification_url: params.notificationUrl,
-      ...(params.backUrl
-        ? { back_urls: { success: params.backUrl, pending: params.backUrl, failure: params.backUrl } }
-        : {}),
-      auto_return: "approved",
-    }),
+    body: JSON.stringify(body),
   });
 
   const json = (await res.json()) as Record<string, unknown>;
