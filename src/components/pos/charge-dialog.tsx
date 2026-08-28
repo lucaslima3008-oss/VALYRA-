@@ -29,8 +29,8 @@ export function PaymentStatusBadge({
   status,
   className,
 }: {
-  status?: PaymentStatus;
-  className?: string;
+  status?: PaymentStatus | undefined;
+  className?: string | undefined;
 }) {
   if (!status) return null;
   const tone =
