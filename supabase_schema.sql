@@ -189,3 +189,20 @@ INSERT INTO public.estoque (id, produto_id, nome, tipo, saldo_atual, saldo_minim
     ('10000000-0000-0000-0000-000000000007', NULL, 'Farinha de trigo', 'insumo', 35.0, 10.0, 'kg', 5.40),
     ('10000000-0000-0000-0000-000000000008', NULL, 'Cobertura de chocolate', 'insumo', 8.2, 3.0, 'kg', 32.00)
 ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- INTEGRAÇÃO MERCADO PAGO (Checkout Pro)
+-- Execute este bloco no SQL Editor do seu projeto Supabase.
+-- ==============================================================================
+ALTER TABLE public.vendas
+  ADD COLUMN IF NOT EXISTS status_pagamento text
+    CHECK (status_pagamento IN ('pendente','pago','expirado','cancelado')),
+  ADD COLUMN IF NOT EXISTS mp_preference_id text,
+  ADD COLUMN IF NOT EXISTS mp_payment_id text,
+  ADD COLUMN IF NOT EXISTS mp_link_pagamento text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS vendas_codigo_key ON public.vendas (codigo);
+CREATE INDEX IF NOT EXISTS vendas_status_pagamento_idx ON public.vendas (status_pagamento);
+
+-- Necessário para o Realtime atualizar a tela quando o webhook confirmar o pagamento
+ALTER TABLE public.vendas REPLICA IDENTITY FULL;
