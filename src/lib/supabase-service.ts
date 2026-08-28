@@ -1,7 +1,7 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import type { Product, BomItem, CustomFee } from "./pricing";
 import type { InventoryItem, StockMovement, MovementType } from "./inventory";
-import type { Sale, CashTransaction } from "./sales";
+import type { Sale, CashTransaction, PaymentStatus } from "./sales";
 import type { AppUser } from "./users";
 import type { AuditEntry } from "./audit";
 import { mockProducts } from "./pricing";
@@ -364,6 +364,9 @@ export async function fetchSupabaseSales(): Promise<Sale[]> {
         marginRealizedPct: Number(row.margem_realizada_pct),
         user: row.usuario,
         date: row.created_at,
+        paymentStatus: (row.status_pagamento ?? undefined) as PaymentStatus | undefined,
+        preferenceId: row.mp_preference_id ?? undefined,
+        paymentLink: row.mp_link_pagamento ?? undefined,
       };
     });
 
@@ -400,6 +403,9 @@ export async function saveSupabaseSale(sale: Sale): Promise<void> {
         lucro_bruto: sale.grossProfit,
         margem_realizada_pct: sale.marginRealizedPct,
         usuario: sale.user,
+        status_pagamento: sale.paymentStatus ?? null,
+        mp_preference_id: sale.preferenceId ?? null,
+        mp_link_pagamento: sale.paymentLink ?? null,
       })
       .select()
       .single();
@@ -422,6 +428,27 @@ export async function saveSupabaseSale(sale: Sale): Promise<void> {
     await supabase.from("itens_venda").insert(itemsToInsert);
   } catch (err) {
     console.error("Exceção ao salvar venda no Supabase:", err);
+  }
+}
+
+/** Atualiza o status da cobrança online de uma venda (Mercado Pago). */
+export async function updateSupabaseSalePayment(
+  saleCode: string,
+  status: PaymentStatus,
+): Promise<void> {
+  const cached = safeGetItem("cost_price_sales");
+  const list: Sale[] = cached ? JSON.parse(cached) : initialSales;
+  safeSetItem(
+    "cost_price_sales",
+    JSON.stringify(list.map((s) => (s.code === saleCode ? { ...s, paymentStatus: status } : s))),
+  );
+
+  if (!isSupabaseConfigured) return;
+
+  try {
+    await supabase.from("vendas").update({ status_pagamento: status }).eq("codigo", saleCode);
+  } catch (err) {
+    console.error("Erro ao atualizar status de pagamento:", err);
   }
 }
 
