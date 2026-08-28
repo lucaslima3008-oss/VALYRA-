@@ -43,9 +43,9 @@ export interface Sale {
   user: string;
   date: string;
   /** Cobrança online (Mercado Pago) */
-  paymentStatus?: PaymentStatus;
-  paymentLink?: string;
-  preferenceId?: string;
+  paymentStatus?: PaymentStatus | undefined;
+  paymentLink?: string | undefined;
+  preferenceId?: string | undefined;
 }
 
 export type TransactionType = "entrada" | "saida";
