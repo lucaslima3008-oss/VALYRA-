@@ -47,8 +47,8 @@ export async function createPreference(params: {
   };
 
   if (backUrls) {
-    body.back_urls = backUrls;
-    body.auto_return = "approved";
+    body["back_urls"] = backUrls;
+    body["auto_return"] = "approved";
   }
 
   const res = await fetch(`${MP_API}/checkout/preferences`, {
