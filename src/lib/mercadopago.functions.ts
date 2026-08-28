@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { resolveBaseUrl } from "./app-url";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
@@ -26,8 +27,7 @@ export const createCharge = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Access Token do Mercado Pago não configurado." };
     }
 
-    const baseUrl =
-      process.env["APP_BASE_URL"] || new URL(getRequest().url).origin.replace(/\/$/, "");
+    const baseUrl = resolveBaseUrl(getRequest().url);
 
     const items = data.items.map((i) => ({
       title: i.name,
@@ -79,7 +79,7 @@ export const getChargeStatus = createServerFn({ method: "POST" })
 export const getMercadoPagoConfig = createServerFn({ method: "GET" }).handler(async () => {
   const mp = await import("./mercadopago.server");
   const publicKey = process.env["MERCADOPAGO_PUBLIC_KEY"] || "";
-  const baseUrl = process.env["APP_BASE_URL"] || new URL(getRequest().url).origin;
+  const baseUrl = resolveBaseUrl(getRequest().url);
   return {
     accessTokenConfigured: mp.hasAccessToken(),
     publicKeyConfigured: Boolean(publicKey),
