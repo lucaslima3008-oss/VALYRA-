@@ -430,7 +430,7 @@ function Index() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex">
+    <div className="min-h-screen bg-[#0A0A0A] text-slate-100 flex">
       {/* 1. Left Fixed Sidebar */}
       <Sidebar
         activeModule={activeModule}
