@@ -7,7 +7,6 @@ import {
   Users,
   History,
   ShieldCheck,
-  Building2,
   ChevronRight,
   Package,
   Settings,

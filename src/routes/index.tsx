@@ -444,9 +444,9 @@ function Index() {
       {/* 2. Main Content Area */}
       <div className="flex-1 pl-64 flex flex-col min-h-screen">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#D4AF37]/20 bg-[#0A0A0A]/85 px-8 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white capitalize">
+            <h1 className="text-lg font-bold tracking-tight text-white capitalize">
               {activeModule === "produtos"
                 ? "Cadastro de Produtos"
                 : activeModule === "precificacao"
@@ -463,7 +463,7 @@ function Index() {
                 ? "Configurações & Integrações"
                 : "Histórico de Auditoria"}
             </h1>
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <span className="rounded-md border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2 py-0.5 text-xs font-semibold text-[#D4AF37]">
               {roleLabel[currentUser.role]}
             </span>
           </div>
