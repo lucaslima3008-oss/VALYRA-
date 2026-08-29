@@ -73,13 +73,16 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cost & Price — Gestão de Portfólio, Estoque e Precificação" },
+      { title: "Valyra — Inteligência em Precificação" },
       {
         name: "description",
         content:
           "Plataforma completa B2B integrada ao Supabase para precificação inteligente com divisor de markup, controle de estoque com baixas automáticas, PDV, fluxo de caixa e auditoria.",
       },
-      { property: "og:title", content: "Cost & Price — Gestão de Portfólio, Estoque e Precificação" },
+      { property: "og:title", content: "Valyra — Inteligência em Precificação" },
+      { property: "og:description", content: "Valyra: precificação inteligente, estoque, PDV, fluxo de caixa e auditoria em um só painel. Não precifique no escuro." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         name: "viewport",
         content: "width=device-width, initial-scale=1.0",
