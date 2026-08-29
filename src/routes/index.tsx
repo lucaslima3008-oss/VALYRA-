@@ -73,13 +73,16 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cost & Price — Gestão de Portfólio, Estoque e Precificação" },
+      { title: "Valyra — Inteligência em Precificação" },
       {
         name: "description",
         content:
           "Plataforma completa B2B integrada ao Supabase para precificação inteligente com divisor de markup, controle de estoque com baixas automáticas, PDV, fluxo de caixa e auditoria.",
       },
-      { property: "og:title", content: "Cost & Price — Gestão de Portfólio, Estoque e Precificação" },
+      { property: "og:title", content: "Valyra — Inteligência em Precificação" },
+      { property: "og:description", content: "Valyra: precificação inteligente, estoque, PDV, fluxo de caixa e auditoria em um só painel. Não precifique no escuro." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         name: "viewport",
         content: "width=device-width, initial-scale=1.0",
@@ -427,7 +430,7 @@ function Index() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex">
+    <div className="min-h-screen bg-[#0A0A0A] text-slate-100 flex">
       {/* 1. Left Fixed Sidebar */}
       <Sidebar
         activeModule={activeModule}
@@ -441,9 +444,9 @@ function Index() {
       {/* 2. Main Content Area */}
       <div className="flex-1 pl-64 flex flex-col min-h-screen">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#D4AF37]/20 bg-[#0A0A0A]/85 px-8 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white capitalize">
+            <h1 className="text-lg font-bold tracking-tight text-white capitalize">
               {activeModule === "produtos"
                 ? "Cadastro de Produtos"
                 : activeModule === "precificacao"
@@ -460,7 +463,7 @@ function Index() {
                 ? "Configurações & Integrações"
                 : "Histórico de Auditoria"}
             </h1>
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <span className="rounded-md border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2 py-0.5 text-xs font-semibold text-[#D4AF37]">
               {roleLabel[currentUser.role]}
             </span>
           </div>
@@ -626,6 +629,15 @@ function Index() {
           {/* TAB 7: CONFIGURAÇÕES */}
           {activeModule === "configuracoes" && <SettingsView isAdmin={currentUser.role === "admin"} />}
         </main>
+
+        <footer className="border-t border-[#D4AF37]/20 bg-[#0A0A0A]/80 px-8 py-4 text-xs text-white/50">
+          <span className="font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">Valyra</span>
+          <span className="mx-2">·</span>
+          Inteligência em Precificação
+          <span className="mx-2">·</span>
+          <span className="italic">Não precifique no escuro.</span>
+        </footer>
+
       </div>
 
     </div>

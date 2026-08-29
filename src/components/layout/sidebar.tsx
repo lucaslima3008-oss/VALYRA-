@@ -7,11 +7,11 @@ import {
   Users,
   History,
   ShieldCheck,
-  Building2,
   ChevronRight,
   Package,
   Settings,
 } from "lucide-react";
+import valyraMark from "@/assets/valyra-mark.png";
 import { cn } from "@/lib/utils";
 import { roleLabel, type AppUser } from "@/lib/users";
 
@@ -113,20 +113,21 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-800 bg-slate-950 text-slate-100 select-none shadow-2xl">
+    <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-[#D4AF37]/20 bg-[#0A0A0A] text-slate-100 select-none shadow-2xl">
       {/* Brand Header */}
-      <div className="flex h-16 items-center gap-3 border-b border-slate-800/80 px-5">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-500 shadow-md shadow-cyan-500/20">
-          <Building2 className="size-5 text-white" />
-        </div>
+      <div className="flex h-16 items-center gap-3 border-b border-[#D4AF37]/25 px-5">
+        <img
+          src={valyraMark}
+          alt="Valyra"
+          width={36}
+          height={36}
+          className="size-9 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]"
+        />
         <div className="flex flex-col">
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold tracking-tight text-white text-base">Cost &amp; Price</span>
-            <span className="rounded bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-300">
-              PRO
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-400">Gestão &amp; Rentabilidade</span>
+          <span className="text-base font-semibold uppercase tracking-[0.22em] text-[#D4AF37]">
+            Valyra
+          </span>
+          <span className="text-[11px] tracking-wide text-white/55">Inteligência em Precificação</span>
         </div>
       </div>
 
@@ -147,19 +148,19 @@ export function Sidebar({
               className={cn(
                 "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-gradient-to-r from-indigo-600/90 to-indigo-700 text-white shadow-lg shadow-indigo-950/50"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white",
+                  ? "bg-[#D4AF37]/12 text-white shadow-lg shadow-black/60 ring-1 ring-[#D4AF37]/40"
+                  : "text-slate-300 hover:bg-white/5 hover:text-[#D4AF37]",
               )}
             >
               {/* Active Indicator Bar */}
               {isActive && (
-                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-cyan-400" />
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#D4AF37]" />
               )}
 
               <Icon
                 className={cn(
                   "size-4.5 shrink-0 transition-colors",
-                  isActive ? "text-cyan-300" : "text-slate-400 group-hover:text-slate-200",
+                  isActive ? "text-[#D4AF37]" : "text-slate-400 group-hover:text-slate-200",
                 )}
               />
 
@@ -167,7 +168,7 @@ export function Sidebar({
                 <div className="flex items-center justify-between">
                   <span className="truncate">{item.label}</span>
                   {item.badge && (
-                    <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                    <span className="ml-2 rounded-full bg-[#D4AF37]/20 px-2 py-0.5 text-[10px] font-semibold text-[#D4AF37]">
                       {item.badge}
                     </span>
                   )}
@@ -175,7 +176,7 @@ export function Sidebar({
                 <span
                   className={cn(
                     "truncate text-[11px]",
-                    isActive ? "text-indigo-200" : "text-slate-400",
+                    isActive ? "text-[#D4AF37]/70" : "text-slate-400",
                   )}
                 >
                   {item.description}
@@ -185,7 +186,7 @@ export function Sidebar({
               <ChevronRight
                 className={cn(
                   "size-4 shrink-0 transition-transform opacity-0 group-hover:opacity-100",
-                  isActive && "opacity-100 text-indigo-300",
+                  isActive && "opacity-100 text-[#D4AF37]",
                 )}
               />
             </button>
@@ -194,8 +195,8 @@ export function Sidebar({
       </div>
 
       {/* User Switcher / Profile Footer */}
-      <div className="border-t border-slate-800/80 bg-slate-950/60 p-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3">
+      <div className="border-t border-[#D4AF37]/20 bg-black/60 p-3">
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <ShieldCheck
@@ -225,7 +226,7 @@ export function Sidebar({
               aria-label="Alternar perfil de usuário"
               value={currentUser.id}
               onChange={(e) => onSelectUser(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-slate-700/80 bg-slate-950 px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 outline-none transition-colors hover:border-slate-600 focus:border-indigo-500"
+              className="w-full appearance-none rounded-lg border border-slate-700/80 bg-[#0A0A0A] px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 outline-none transition-colors hover:border-slate-600 focus:border-[#D4AF37]"
             >
               {users.length > 0 ? (
                 users.map((u) => (
