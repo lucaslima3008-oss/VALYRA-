@@ -629,6 +629,15 @@ function Index() {
           {/* TAB 7: CONFIGURAÇÕES */}
           {activeModule === "configuracoes" && <SettingsView isAdmin={currentUser.role === "admin"} />}
         </main>
+
+        <footer className="border-t border-[#D4AF37]/20 bg-[#0A0A0A]/80 px-8 py-4 text-xs text-white/50">
+          <span className="font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">Valyra</span>
+          <span className="mx-2">·</span>
+          Inteligência em Precificação
+          <span className="mx-2">·</span>
+          <span className="italic">Não precifique no escuro.</span>
+        </footer>
+
       </div>
 
     </div>
