@@ -221,7 +221,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
-        <SheetHeader className="border-b bg-surface px-6 py-5">
+        <SheetHeader className="border-b bg-surface px-4 py-4 sm:px-6 sm:py-5">
           <SheetTitle className="text-lg tracking-tight">
             {editing ? "Editar Produto" : "Cadastro de Produto"}
           </SheetTitle>
