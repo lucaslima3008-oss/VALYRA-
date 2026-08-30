@@ -118,7 +118,23 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-[#D4AF37]/20 bg-[#0A0A0A] text-slate-100 select-none shadow-2xl">
+    <>
+      {/* Backdrop (mobile/tablet) */}
+      <div
+        onClick={onCloseMobile}
+        aria-hidden={!mobileOpen}
+        className={cn(
+          "fixed inset-0 z-30 bg-black/70 backdrop-blur-sm transition-opacity duration-200 lg:hidden",
+          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      />
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex w-[17rem] max-w-[85vw] flex-col border-r border-[#D4AF37]/20 bg-[#0A0A0A] text-slate-100 select-none shadow-2xl transition-transform duration-200 lg:w-64 lg:max-w-none lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
       {/* Brand Header */}
       <div className="flex h-16 items-center gap-3 border-b border-[#D4AF37]/25 px-5">
         <img
