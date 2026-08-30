@@ -462,7 +462,7 @@ export function InventoryView({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="max-h-[60vh] overflow-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full min-w-[720px] text-left text-xs">
               <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 dark:bg-slate-950 dark:border-slate-800">
                 <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
