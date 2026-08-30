@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Database,
   RefreshCw,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +99,7 @@ function Index() {
   // Global Navigation
   const [activeModule, setActiveModule] = useState<AppModule>("produtos");
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Database State (initialized with fallback data for immediate render)
   const [products, setProducts] = useState<Product[]>(mockProducts);
@@ -544,8 +546,8 @@ function Index() {
               </div>
 
               {/* Filters & Search */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="relative min-w-72 flex-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="relative w-full flex-1 sm:min-w-72">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <Input
                     className="pl-9 bg-white dark:bg-slate-900"
@@ -555,13 +557,13 @@ function Index() {
                   />
                 </div>
 
-                <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900">
+                <div className="inline-flex w-full overflow-x-auto rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900 sm:w-auto">
                   {filters.map((f) => (
                     <button
                       key={f.key}
                       onClick={() => setFilter(f.key)}
                       className={cn(
-                        "rounded-md px-4 py-1.5 text-xs font-semibold transition-all duration-150",
+                        "min-h-9 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-all duration-150 sm:flex-none",
                         filter === f.key
                           ? "bg-indigo-600 text-white shadow-sm"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -642,7 +644,7 @@ function Index() {
           {activeModule === "configuracoes" && <SettingsView isAdmin={currentUser.role === "admin"} />}
         </main>
 
-        <footer className="border-t border-[#D4AF37]/20 bg-[#0A0A0A]/80 px-8 py-4 text-xs text-white/50">
+        <footer className="border-t border-[#D4AF37]/20 bg-[#0A0A0A]/80 px-4 py-4 text-[11px] text-white/50 sm:px-8 sm:text-xs">
           <span className="font-semibold uppercase tracking-[0.2em] text-[#D4AF37]">Valyra</span>
           <span className="mx-2">·</span>
           Inteligência em Precificação
