@@ -53,6 +53,8 @@ export function Sidebar({
   currentUserId,
   onSelectUser,
   lowStockCount = 0,
+  mobileOpen = false,
+  onCloseMobile,
 }: SidebarProps) {
   const currentUser = users.find((u) => u.id === currentUserId) || users[0] || fallbackUser;
   const currentRole = currentUser.role || "admin";
