@@ -141,7 +141,7 @@ export function ChargeDialog({ sale, open, onOpenChange, onStatusChange }: Charg
               <PaymentStatusBadge status={status} />
               <button
                 onClick={() => void refreshStatus()}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-indigo-600"
+                className="inline-flex min-h-11 items-center gap-1.5 px-1 text-xs font-medium text-slate-500 hover:text-indigo-600"
               >
                 {checking ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -155,7 +155,7 @@ export function ChargeDialog({ sale, open, onOpenChange, onStatusChange }: Charg
             {link ? (
               <>
                 <div className="flex justify-center rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800">
-                  <QRCodeSVG value={link} size={168} level="M" includeMargin={false} />
+                  <QRCodeSVG value={link} className="h-auto w-full max-w-[240px]" size={240} level="M" includeMargin={false} />
                 </div>
 
                 <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-950">
@@ -168,7 +168,7 @@ export function ChargeDialog({ sale, open, onOpenChange, onStatusChange }: Charg
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <a href={whatsappUrl} target="_blank" rel="noreferrer">
                     <Button className="w-full gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
                       <MessageCircle className="size-4" />

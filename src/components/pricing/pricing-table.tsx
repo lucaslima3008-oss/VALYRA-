@@ -64,7 +64,7 @@ function BreakdownDialog({ product }: { product: Product }) {
           size="icon"
           aria-label="Detalhar cálculo"
           title="Detalhar cálculo"
-          className="size-8 text-muted-foreground hover:text-foreground"
+          className="size-11 text-muted-foreground hover:text-foreground sm:size-9"
         >
           <Calculator className="size-4" />
         </Button>
@@ -348,7 +348,7 @@ export function PricingTable({
                           size="icon"
                           aria-label="Restaurar preço sugerido"
                           title="Restaurar preço sugerido"
-                          className="size-8 text-muted-foreground hover:text-foreground"
+                          className="size-11 text-muted-foreground hover:text-foreground sm:size-9"
                           onClick={() => onUpdate(p.id, { manualPrice: null })}
                         >
                           <RotateCcw className="size-4" />

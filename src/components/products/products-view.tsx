@@ -71,7 +71,7 @@ export function ProductsView({
         )}
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="text-sm font-medium text-muted-foreground">Total de Produtos</div>
           <div className="mt-1 flex items-baseline gap-2">
@@ -175,7 +175,7 @@ export function ProductsView({
                             size="icon"
                             onClick={() => handleEdit(p)}
                             disabled={!canEdit}
-                            className="size-8 hover:text-primary"
+                            className="size-11 hover:text-primary sm:size-9"
                           >
                             <PencilLine className="size-4" />
                           </Button>
@@ -188,7 +188,7 @@ export function ProductsView({
                               }
                             }}
                             disabled={!canEdit}
-                            className="size-8 hover:text-destructive"
+                            className="size-11 hover:text-destructive sm:size-9"
                           >
                             <Trash2 className="size-4" />
                           </Button>

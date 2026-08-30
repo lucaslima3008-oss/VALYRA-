@@ -62,7 +62,7 @@ export function AuditView({ entries }: AuditViewProps) {
       </div>
 
       {/* Metrics */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2 text-slate-500">
             <History className="size-4 text-indigo-500" />
@@ -105,8 +105,8 @@ export function AuditView({ entries }: AuditViewProps) {
       </div>
 
       {/* Search & Filter */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative min-w-72 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="relative w-full flex-1 sm:min-w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <Input
             className="pl-9 bg-white dark:bg-slate-900"
@@ -116,11 +116,11 @@ export function AuditView({ entries }: AuditViewProps) {
           />
         </div>
 
-        <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900">
+        <div className="inline-flex w-full overflow-x-auto rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900 sm:w-auto">
           <button
             onClick={() => setKindFilter("todos")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
               kindFilter === "todos"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -131,7 +131,7 @@ export function AuditView({ entries }: AuditViewProps) {
           <button
             onClick={() => setKindFilter("preco")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
               kindFilter === "preco"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -142,7 +142,7 @@ export function AuditView({ entries }: AuditViewProps) {
           <button
             onClick={() => setKindFilter("parametro")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
               kindFilter === "parametro"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -154,8 +154,8 @@ export function AuditView({ entries }: AuditViewProps) {
       </div>
 
       {/* Audit Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <table className="w-full min-w-[860px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
             <tr>
               <th className="px-4 py-3">Data / Hora</th>

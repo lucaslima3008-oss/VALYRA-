@@ -33,6 +33,9 @@ interface SidebarProps {
   onSelectUser: (userId: string) => void;
   lowStockCount?: number;
   unresolvedAudits?: number;
+  /** Controla a exibição do menu em overlay no mobile/tablet */
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 const fallbackUser: AppUser = {
@@ -50,6 +53,8 @@ export function Sidebar({
   currentUserId,
   onSelectUser,
   lowStockCount = 0,
+  mobileOpen = false,
+  onCloseMobile,
 }: SidebarProps) {
   const currentUser = users.find((u) => u.id === currentUserId) || users[0] || fallbackUser;
   const currentRole = currentUser.role || "admin";
@@ -113,7 +118,23 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-[#D4AF37]/20 bg-[#0A0A0A] text-slate-100 select-none shadow-2xl">
+    <>
+      {/* Backdrop (mobile/tablet) */}
+      <div
+        onClick={onCloseMobile}
+        aria-hidden={!mobileOpen}
+        className={cn(
+          "fixed inset-0 z-30 bg-black/70 backdrop-blur-sm transition-opacity duration-200 lg:hidden",
+          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      />
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex w-[17rem] max-w-[85vw] flex-col border-r border-[#D4AF37]/20 bg-[#0A0A0A] text-slate-100 select-none shadow-2xl transition-transform duration-200 lg:w-64 lg:max-w-none lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
       {/* Brand Header */}
       <div className="flex h-16 items-center gap-3 border-b border-[#D4AF37]/25 px-5">
         <img
@@ -144,9 +165,12 @@ export function Sidebar({
           return (
             <button
               key={item.id}
-              onClick={() => onSelectModule(item.id)}
+              onClick={() => {
+                onSelectModule(item.id);
+                onCloseMobile?.();
+              }}
               className={cn(
-                "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150",
+                "group relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150",
                 isActive
                   ? "bg-[#D4AF37]/12 text-white shadow-lg shadow-black/60 ring-1 ring-[#D4AF37]/40"
                   : "text-slate-300 hover:bg-white/5 hover:text-[#D4AF37]",
@@ -246,6 +270,7 @@ export function Sidebar({
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

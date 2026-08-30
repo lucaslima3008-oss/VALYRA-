@@ -48,7 +48,7 @@ export function UsersPanel({ users, canManage, onCreate, onUpdate, onDelete }: P
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-[var(--shadow-card)]">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-[var(--shadow-card)]">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
             <tr className="border-b bg-surface text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -120,7 +120,7 @@ export function UsersPanel({ users, canManage, onCreate, onUpdate, onDelete }: P
                     size="icon"
                     disabled={!canManage}
                     aria-label={`Remover ${u.name}`}
-                    className="size-8 text-muted-foreground hover:text-destructive"
+                    className="size-11 text-muted-foreground hover:text-destructive sm:size-9"
                     onClick={() => onDelete(u.id)}
                   >
                     <Trash2 className="size-4" />
@@ -158,7 +158,7 @@ export function UsersPanel({ users, canManage, onCreate, onUpdate, onDelete }: P
                 onChange={(e) => set({ email: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground">Perfil</Label>
                 <div className="inline-flex w-full rounded-lg border bg-surface p-1">

@@ -115,7 +115,7 @@ function ItemsEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="grid grid-cols-[1fr_5rem_6rem_2rem] items-end gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
+          className="grid grid-cols-[1fr_4rem_2.5rem] items-end gap-2 sm:grid-cols-[1fr_5rem_6rem_2rem] rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
         >
           <div className="space-y-1">
             {idx === 0 && <Label className="text-[11px] text-muted-foreground">Item</Label>}
@@ -221,7 +221,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
-        <SheetHeader className="border-b bg-surface px-6 py-5">
+        <SheetHeader className="border-b bg-surface px-4 py-4 sm:px-6 sm:py-5">
           <SheetTitle className="text-lg tracking-tight">
             {editing ? "Editar Produto" : "Cadastro de Produto"}
           </SheetTitle>
@@ -232,7 +232,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 space-y-7 overflow-y-auto px-6 py-6">
+        <div className="flex-1 space-y-7 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
           <section className="space-y-4">
             <StepLabel n={1} title="Informações básicas" hint="Identificação e natureza do item" />
             <div className="space-y-1.5">
@@ -268,7 +268,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
                 placeholder="Insumo / embalagem"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <NumInput
                   label="Tempo gasto (minutos)"
                   icon={Clock}
@@ -291,7 +291,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
                 title="Custos de aquisição"
                 hint="Compra, frete e despesas irrecuperáveis"
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <NumInput
                   label="Preço pago ao fornecedor"
                   icon={CircleDollarSign}
@@ -339,7 +339,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
 
           <section className="space-y-4">
             <StepLabel n={4} title="Parâmetros de venda" hint="Margem alvo, taxas e logística" />
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <NumInput
                 label="Margem alvo (%)"
                 icon={Percent}
@@ -360,7 +360,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
               />
             </div>
             {editing && (
-              <div className="grid grid-cols-2 items-end gap-3">
+              <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2">
                 <NumInput
                   label="Preço praticado manual (R$)"
                   icon={CircleDollarSign}
@@ -395,7 +395,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
               {draft.customFees.map((fee) => (
                 <div
                   key={fee.id}
-                  className="grid grid-cols-[1fr_auto_6rem_2rem] items-center gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
+                  className="grid grid-cols-[1fr_auto_2.5rem] items-center gap-2 sm:grid-cols-[1fr_auto_6rem_2rem] rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
                 >
                   <Input
                     className="h-9"
@@ -476,7 +476,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
           )}
         </div>
 
-        <div className="border-t bg-surface px-6 py-4">
+        <div className="sticky bottom-0 border-t bg-surface px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
           <div className="mb-4 flex items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-[var(--shadow-card)]">
             <div>
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -491,11 +491,11 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
               <p className="text-base font-semibold tabular-nums text-primary">{brl(price)}</p>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" className="min-h-11 w-full sm:w-auto" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button onClick={submit} disabled={!draft.name.trim()}>
+            <Button className="min-h-11 w-full sm:w-auto" onClick={submit} disabled={!draft.name.trim()}>
               {editing ? "Salvar alterações" : "Salvar produto"}
             </Button>
           </div>
