@@ -115,7 +115,7 @@ function ItemsEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="grid grid-cols-[1fr_5rem_6rem_2rem] items-end gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
+          className="grid grid-cols-[1fr_4rem_2.5rem] items-end gap-2 sm:grid-cols-[1fr_5rem_6rem_2rem] rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
         >
           <div className="space-y-1">
             {idx === 0 && <Label className="text-[11px] text-muted-foreground">Item</Label>}
@@ -268,7 +268,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
                 placeholder="Insumo / embalagem"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <NumInput
                   label="Tempo gasto (minutos)"
                   icon={Clock}
@@ -291,7 +291,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
                 title="Custos de aquisição"
                 hint="Compra, frete e despesas irrecuperáveis"
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <NumInput
                   label="Preço pago ao fornecedor"
                   icon={CircleDollarSign}
@@ -339,7 +339,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
 
           <section className="space-y-4">
             <StepLabel n={4} title="Parâmetros de venda" hint="Margem alvo, taxas e logística" />
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <NumInput
                 label="Margem alvo (%)"
                 icon={Percent}
@@ -360,7 +360,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
               />
             </div>
             {editing && (
-              <div className="grid grid-cols-2 items-end gap-3">
+              <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2">
                 <NumInput
                   label="Preço praticado manual (R$)"
                   icon={CircleDollarSign}
@@ -395,7 +395,7 @@ export function ProductSheet({ open, onOpenChange, product, onSave }: Props) {
               {draft.customFees.map((fee) => (
                 <div
                   key={fee.id}
-                  className="grid grid-cols-[1fr_auto_6rem_2rem] items-center gap-2 rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
+                  className="grid grid-cols-[1fr_auto_2.5rem] items-center gap-2 sm:grid-cols-[1fr_auto_6rem_2rem] rounded-lg border bg-card p-3 shadow-[var(--shadow-card)]"
                 >
                   <Input
                     className="h-9"

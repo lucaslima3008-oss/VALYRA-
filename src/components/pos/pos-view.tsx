@@ -239,7 +239,7 @@ export function PosView({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Frente de Caixa (PDV)
@@ -252,7 +252,7 @@ export function PosView({
         <Button
           variant="outline"
           onClick={() => setRecentSalesOpen(true)}
-          className="gap-2 border-slate-300 dark:border-slate-700"
+          className="min-h-11 w-full gap-2 border-slate-300 dark:border-slate-700 sm:w-auto"
         >
           <Receipt className="size-4 text-slate-500" />
           Histórico de Vendas ({sales.length})
@@ -262,8 +262,8 @@ export function PosView({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Side: Product Catalog (7 Cols) */}
         <div className="space-y-4 lg:col-span-7">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-64 flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative w-full flex-1 sm:min-w-64">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <Input
                 className="pl-9 bg-white dark:bg-slate-900"
@@ -273,11 +273,11 @@ export function PosView({
               />
             </div>
 
-            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900">
+            <div className="inline-flex w-full overflow-x-auto rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900 sm:w-auto">
               <button
                 onClick={() => setFilterType("todos")}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                  "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
                   filterType === "todos"
                     ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -288,7 +288,7 @@ export function PosView({
               <button
                 onClick={() => setFilterType("fabricado")}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                  "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
                   filterType === "fabricado"
                     ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -299,7 +299,7 @@ export function PosView({
               <button
                 onClick={() => setFilterType("revenda")}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                  "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
                   filterType === "revenda"
                     ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -463,7 +463,7 @@ export function PosView({
                   type="button"
                   onClick={() => setPaymentMethod("pix")}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
+                    "flex min-h-11 items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
                     paymentMethod === "pix"
                       ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                       : "border-slate-200 text-slate-600 dark:border-slate-800",
@@ -476,7 +476,7 @@ export function PosView({
                   type="button"
                   onClick={() => setPaymentMethod("cartao_credito")}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
+                    "flex min-h-11 items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
                     paymentMethod === "cartao_credito"
                       ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
                       : "border-slate-200 text-slate-600 dark:border-slate-800",
@@ -489,7 +489,7 @@ export function PosView({
                   type="button"
                   onClick={() => setPaymentMethod("cartao_debito")}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
+                    "flex min-h-11 items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
                     paymentMethod === "cartao_debito"
                       ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300"
                       : "border-slate-200 text-slate-600 dark:border-slate-800",
@@ -502,7 +502,7 @@ export function PosView({
                   type="button"
                   onClick={() => setPaymentMethod("dinheiro")}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
+                    "flex min-h-11 items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-all",
                     paymentMethod === "dinheiro"
                       ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                       : "border-slate-200 text-slate-600 dark:border-slate-800",
@@ -669,8 +669,8 @@ export function PosView({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <table className="w-full text-left text-xs">
+          <div className="max-h-[60vh] overflow-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <table className="w-full min-w-[900px] text-left text-xs">
               <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 dark:bg-slate-950 dark:border-slate-800">
                 <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   <th className="px-3 py-2.5">Código</th>

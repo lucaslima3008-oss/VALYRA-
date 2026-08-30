@@ -145,7 +145,7 @@ export function InventoryView({
       </div>
 
       {/* Metric Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2 text-slate-500">
             <Boxes className="size-4 text-indigo-500" />
@@ -188,8 +188,8 @@ export function InventoryView({
       </div>
 
       {/* Filters and Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative min-w-72 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="relative w-full flex-1 sm:min-w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <Input
             className="pl-9 bg-white dark:bg-slate-900"
@@ -199,11 +199,11 @@ export function InventoryView({
           />
         </div>
 
-        <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900">
+        <div className="inline-flex w-full overflow-x-auto rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900 sm:w-auto">
           <button
             onClick={() => setFilterType("todos")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
               filterType === "todos"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -214,7 +214,7 @@ export function InventoryView({
           <button
             onClick={() => setFilterType("produto_final")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
               filterType === "produto_final"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -225,7 +225,7 @@ export function InventoryView({
           <button
             onClick={() => setFilterType("insumo")}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              "min-h-9 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:flex-none",
               filterType === "insumo"
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
@@ -238,7 +238,7 @@ export function InventoryView({
 
       {/* Inventory Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-[840px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
             <tr>
               <th className="px-4 py-3">Item / Descrição</th>
@@ -342,7 +342,7 @@ export function InventoryView({
           <form onSubmit={handleConfirmMovement} className="space-y-4">
             <div className="space-y-1.5">
               <Label>Tipo de Movimentação</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <button
                   type="button"
                   onClick={() => setMovType("entrada")}
@@ -400,7 +400,7 @@ export function InventoryView({
             {movType === "entrada" && (
               <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 space-y-3 dark:border-emerald-800 dark:bg-emerald-950/30">
                 <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">Custos de Aquisição do Lote</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Preço Pago ao Fornecedor (R$)</Label>
                     <Input
@@ -463,7 +463,7 @@ export function InventoryView({
           </DialogHeader>
 
           <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[720px] text-left text-xs">
               <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 dark:bg-slate-950 dark:border-slate-800">
                 <tr className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   <th className="px-3 py-2.5">Data/Hora</th>
