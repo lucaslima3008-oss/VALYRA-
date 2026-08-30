@@ -120,7 +120,7 @@ export function UsersPanel({ users, canManage, onCreate, onUpdate, onDelete }: P
                     size="icon"
                     disabled={!canManage}
                     aria-label={`Remover ${u.name}`}
-                    className="size-8 text-muted-foreground hover:text-destructive"
+                    className="size-11 text-muted-foreground hover:text-destructive sm:size-9"
                     onClick={() => onDelete(u.id)}
                   >
                     <Trash2 className="size-4" />

@@ -175,7 +175,7 @@ export function ProductsView({
                             size="icon"
                             onClick={() => handleEdit(p)}
                             disabled={!canEdit}
-                            className="size-8 hover:text-primary"
+                            className="size-11 hover:text-primary sm:size-9"
                           >
                             <PencilLine className="size-4" />
                           </Button>
@@ -188,7 +188,7 @@ export function ProductsView({
                               }
                             }}
                             disabled={!canEdit}
-                            className="size-8 hover:text-destructive"
+                            className="size-11 hover:text-destructive sm:size-9"
                           >
                             <Trash2 className="size-4" />
                           </Button>
