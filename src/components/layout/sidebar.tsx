@@ -33,6 +33,9 @@ interface SidebarProps {
   onSelectUser: (userId: string) => void;
   lowStockCount?: number;
   unresolvedAudits?: number;
+  /** Controla a exibição do menu em overlay no mobile/tablet */
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 const fallbackUser: AppUser = {
