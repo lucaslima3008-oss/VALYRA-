@@ -431,7 +431,7 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-slate-100 flex">
-      {/* 1. Left Fixed Sidebar */}
+      {/* 1. Left Sidebar (fixa no desktop, retrátil em mobile/tablet) */}
       <Sidebar
         activeModule={activeModule}
         onSelectModule={setActiveModule}
@@ -439,14 +439,25 @@ function Index() {
         currentUserId={currentUserId}
         onSelectUser={setCurrentUserId}
         lowStockCount={lowStockCount}
+        mobileOpen={menuOpen}
+        onCloseMobile={() => setMenuOpen(false)}
       />
 
       {/* 2. Main Content Area */}
-      <div className="flex-1 pl-64 flex flex-col min-h-screen">
+      <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col lg:pl-64">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#D4AF37]/20 bg-[#0A0A0A]/85 px-8 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight text-white capitalize">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-[#D4AF37]/20 bg-[#0A0A0A]/85 px-3 backdrop-blur-md sm:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Abrir menu de módulos"
+            className="grid size-11 shrink-0 place-items-center rounded-lg border border-[#D4AF37]/30 text-[#D4AF37] lg:hidden"
+          >
+            <Menu className="size-5" />
+          </button>
+
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <h1 className="truncate text-sm font-bold tracking-tight text-white capitalize sm:text-lg">
               {activeModule === "produtos"
                 ? "Cadastro de Produtos"
                 : activeModule === "precificacao"
@@ -463,16 +474,16 @@ function Index() {
                 ? "Configurações & Integrações"
                 : "Histórico de Auditoria"}
             </h1>
-            <span className="rounded-md border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2 py-0.5 text-xs font-semibold text-[#D4AF37]">
+            <span className="hidden shrink-0 rounded-md border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2 py-0.5 text-xs font-semibold text-[#D4AF37] sm:inline-block">
               {roleLabel[currentUser.role]}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {/* Supabase Status Indicator */}
             <div
               className={cn(
-                "hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium border",
+                "hidden items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium border xl:flex",
                 isSupabaseConfigured
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
                   : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800",
@@ -488,13 +499,13 @@ function Index() {
               title="Recarregar Dados"
               onClick={loadAllData}
               disabled={loading}
-              className="size-8"
+              className="size-11 sm:size-9"
             >
-              <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             </Button>
 
             {!canEdit && activeModule === "precificacao" && (
-              <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+              <span className="hidden text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-1.5 lg:flex items-center gap-1.5">
                 <ShieldCheck className="size-3.5" /> Modo Somente Leitura (Operacional)
               </span>
             )}
@@ -504,7 +515,8 @@ function Index() {
         </header>
 
         {/* Dynamic Main Body Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-3 sm:p-5 lg:p-8">
+
           {/* TAB 0: PRODUTOS (CADASTRO) */}
           {activeModule === "produtos" && (
             <ProductsView
