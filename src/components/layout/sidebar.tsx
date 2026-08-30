@@ -165,9 +165,12 @@ export function Sidebar({
           return (
             <button
               key={item.id}
-              onClick={() => onSelectModule(item.id)}
+              onClick={() => {
+                onSelectModule(item.id);
+                onCloseMobile?.();
+              }}
               className={cn(
-                "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150",
+                "group relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150",
                 isActive
                   ? "bg-[#D4AF37]/12 text-white shadow-lg shadow-black/60 ring-1 ring-[#D4AF37]/40"
                   : "text-slate-300 hover:bg-white/5 hover:text-[#D4AF37]",
