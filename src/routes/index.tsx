@@ -207,7 +207,7 @@ function Index() {
 
       // Automatically register product in inventory if not present
       const newInvItem: InventoryItem = {
-        id: `inv-${next.id}`,
+        id: uid(),
         productId: next.id,
         name: next.name,
         type: "produto_final",
