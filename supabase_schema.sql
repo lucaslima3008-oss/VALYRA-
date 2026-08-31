@@ -206,3 +206,42 @@ CREATE INDEX IF NOT EXISTS vendas_status_pagamento_idx ON public.vendas (status_
 
 -- Necessário para o Realtime atualizar a tela quando o webhook confirmar o pagamento
 ALTER TABLE public.vendas REPLICA IDENTITY FULL;
+
+-- ==============================================================================
+-- CHAVES DE PAGAMENTO EDITÁVEIS (override de variáveis de ambiente)
+-- Execute este bloco no SQL Editor do seu projeto Supabase.
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.configuracoes_pagamento (
+    chave TEXT PRIMARY KEY,
+    valor TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+GRANT ALL ON public.configuracoes_pagamento TO service_role;
+
+-- RLS habilitado e SEM nenhuma policy: só o service role (usado apenas no
+-- servidor) consegue ler/gravar aqui. O navegador (chave anon) nunca acessa
+-- esta tabela diretamente — tudo passa pela server function updatePaymentSettings.
+ALTER TABLE public.configuracoes_pagamento ENABLE ROW LEVEL SECURITY;
+
+-- ==============================================================================
+-- MAQUININHAS DE CARTÃO (cadastro para uso no PDV)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.maquininhas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    apelido TEXT NOT NULL,
+    modelo TEXT,
+    adquirente TEXT,
+    numero_serie TEXT,
+    status TEXT NOT NULL DEFAULT 'ativa' CHECK (status IN ('ativa', 'inativa')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.maquininhas TO anon, authenticated;
+GRANT ALL ON public.maquininhas TO service_role;
+
+ALTER TABLE public.maquininhas ENABLE ROW LEVEL SECURITY;
+
+-- Mesmo padrão de acesso já usado nas demais tabelas deste projeto.
+CREATE POLICY "Permissao publica maquininhas" ON public.maquininhas FOR ALL USING (true) WITH CHECK (true);

@@ -4,6 +4,113 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const MP_API = "https://api.mercadopago.com";
 
+/** Cliente com service role para escrita a partir do webhook (bypassa RLS). */
+export function getServiceClient(): SupabaseClient | null {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+// Cache em memória (curta duração) para não bater no banco a cada requisição.
+let overridesCache: { accessToken?: string; publicKey?: string } | null = null;
+let overridesCacheAt = 0;
+const OVERRIDES_TTL_MS = 30_000;
+
+async function loadOverrides(): Promise<{ accessToken?: string; publicKey?: string }> {
+  if (overridesCache && Date.now() - overridesCacheAt < OVERRIDES_TTL_MS) return overridesCache;
+
+  const db = getServiceClient();
+  if (!db) {
+    overridesCache = {};
+    overridesCacheAt = Date.now();
+    return overridesCache;
+  }
+
+  try {
+    const { data } = await db
+      .from("configuracoes_pagamento")
+      .select("chave, valor")
+      .in("chave", ["mercadopago_access_token", "mercadopago_public_key"]);
+
+    const result: { accessToken?: string; publicKey?: string } = {};
+    for (const row of data ?? []) {
+      if (row["chave"] === "mercadopago_access_token" && row["valor"])
+        result.accessToken = row["valor"];
+      if (row["chave"] === "mercadopago_public_key" && row["valor"])
+        result.publicKey = row["valor"];
+    }
+    overridesCache = result;
+    overridesCacheAt = Date.now();
+    return result;
+  } catch (err) {
+    console.error("Erro ao carregar overrides de pagamento:", err);
+    overridesCache = {};
+    overridesCacheAt = Date.now();
+    return overridesCache;
+  }
+}
+
+/** Salva (ou remove, se valor vazio) uma chave editável de pagamento no banco. */
+export async function setPaymentOverride(
+  key: "mercadopago_access_token" | "mercadopago_public_key",
+  value: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const db = getServiceClient();
+  if (!db) {
+    return {
+      ok: false,
+      error:
+        "SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY precisam estar configurados para editar chaves por aqui.",
+    };
+  }
+
+  try {
+    if (value.trim()) {
+      const { error } = await db
+        .from("configuracoes_pagamento")
+        .upsert({ chave: key, valor: value.trim(), updated_at: new Date().toISOString() });
+      if (error) return { ok: false, error: error.message };
+    } else {
+      await db.from("configuracoes_pagamento").delete().eq("chave", key);
+    }
+    overridesCache = null; // força recarregar no próximo uso
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Erro desconhecido" };
+  }
+}
+
+/** Devolve um preview mascarado (nunca a chave completa) para exibir na UI. */
+export function maskSecret(value: string): string {
+  if (value.length <= 12) return "••••••••";
+  return `${value.slice(0, 8)}••••${value.slice(-4)}`;
+}
+
+export async function getAccessTokenAsync(): Promise<string> {
+  const overrides = await loadOverrides();
+  const token = overrides.accessToken || process.env["MERCADOPAGO_ACCESS_TOKEN"];
+  if (!token) throw new Error("MERCADOPAGO_ACCESS_TOKEN não configurado.");
+  return token;
+}
+
+export async function hasAccessTokenAsync(): Promise<boolean> {
+  const overrides = await loadOverrides();
+  return Boolean(overrides.accessToken || process.env["MERCADOPAGO_ACCESS_TOKEN"]);
+}
+
+export async function isSandboxTokenAsync(): Promise<boolean> {
+  const overrides = await loadOverrides();
+  const token = overrides.accessToken || process.env["MERCADOPAGO_ACCESS_TOKEN"] || "";
+  return token.startsWith("TEST-");
+}
+
+export async function getPublicKeyAsync(): Promise<string> {
+  const overrides = await loadOverrides();
+  return overrides.publicKey || process.env["MERCADOPAGO_PUBLIC_KEY"] || "";
+}
+
+/** @deprecated use getAccessTokenAsync — mantido apenas onde a chamada não pode ser assíncrona. */
 export function getAccessToken(): string {
   const token = process.env["MERCADOPAGO_ACCESS_TOKEN"];
   if (!token) throw new Error("MERCADOPAGO_ACCESS_TOKEN não configurado.");
@@ -54,7 +161,7 @@ export async function createPreference(params: {
   const res = await fetch(`${MP_API}/checkout/preferences`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getAccessToken()}`,
+      Authorization: `Bearer ${await getAccessTokenAsync()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
@@ -79,7 +186,7 @@ export interface MpPayment {
 
 export async function getPayment(paymentId: string): Promise<MpPayment | null> {
   const res = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
-    headers: { Authorization: `Bearer ${getAccessToken()}` },
+    headers: { Authorization: `Bearer ${await getAccessTokenAsync()}` },
   });
   if (!res.ok) return null;
   return (await res.json()) as MpPayment;
@@ -88,7 +195,7 @@ export async function getPayment(paymentId: string): Promise<MpPayment | null> {
 export async function searchPaymentsByReference(reference: string): Promise<MpPayment[]> {
   const res = await fetch(
     `${MP_API}/v1/payments/search?external_reference=${encodeURIComponent(reference)}&sort=date_created&criteria=desc`,
-    { headers: { Authorization: `Bearer ${getAccessToken()}` } },
+    { headers: { Authorization: `Bearer ${await getAccessTokenAsync()}` } },
   );
   if (!res.ok) return [];
   const json = (await res.json()) as { results?: MpPayment[] };
@@ -111,14 +218,6 @@ export function mapStatus(mpStatus: string): "pendente" | "pago" | "expirado" | 
     default:
       return "pendente";
   }
-}
-
-/** Cliente com service role para escrita a partir do webhook (bypassa RLS). */
-export function getServiceClient(): SupabaseClient | null {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 /**
