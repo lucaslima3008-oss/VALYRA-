@@ -4,6 +4,7 @@ import type { InventoryItem, StockMovement, MovementType } from "./inventory";
 import type { Sale, CashTransaction, PaymentStatus } from "./sales";
 import type { AppUser } from "./users";
 import type { AuditEntry } from "./audit";
+import type { CardMachine } from "./card-machines";
 import { mockProducts } from "./pricing";
 import { initialInventory, initialMovements } from "./inventory";
 import { initialSales, initialCashTransactions } from "./sales";
@@ -119,7 +120,7 @@ export async function saveSupabaseProduct(product: Product): Promise<void> {
 
   try {
     const { error: prodErr } = await supabase.from("produtos").upsert({
-      id: product.id.length > 20 ? product.id : undefined,
+      id: product.id,
       nome: product.name,
       tipo: product.type,
       labor_minutes: product.laborMinutes,
@@ -136,7 +137,7 @@ export async function saveSupabaseProduct(product: Product): Promise<void> {
 
     if (prodErr) console.error("Erro ao salvar produto no Supabase:", prodErr);
 
-    if (product.id.length > 20) {
+    {
       await supabase.from("ficha_tecnica_itens").delete().eq("produto_id", product.id);
 
       const itemsToInsert = [
@@ -238,8 +239,8 @@ export async function saveSupabaseInventoryItem(item: InventoryItem): Promise<vo
 
   try {
     await supabase.from("estoque").upsert({
-      id: item.id.length > 20 ? item.id : undefined,
-      produto_id: item.productId && item.productId.length > 20 ? item.productId : null,
+      id: item.id,
+      produto_id: item.productId || null,
       nome: item.name,
       tipo: item.type,
       saldo_atual: item.currentStock,
@@ -300,17 +301,15 @@ export async function recordSupabaseMovement(movement: StockMovement): Promise<v
   if (!isSupabaseConfigured) return;
 
   try {
-    if (movement.itemId.length > 20) {
-      await supabase.from("movimentacoes_estoque").insert({
-        item_id: movement.itemId,
-        item_nome: movement.itemName,
-        tipo: movement.type,
-        quantidade: movement.quantity,
-        saldo_apos: movement.balanceAfter,
-        motivo: movement.reason,
-        usuario: movement.user,
-      });
-    }
+    await supabase.from("movimentacoes_estoque").insert({
+      item_id: movement.itemId,
+      item_nome: movement.itemName,
+      tipo: movement.type,
+      quantidade: movement.quantity,
+      saldo_apos: movement.balanceAfter,
+      motivo: movement.reason,
+      usuario: movement.user,
+    });
   } catch (err) {
     console.error("Erro ao registrar movimentação de estoque:", err);
   }
@@ -417,7 +416,7 @@ export async function saveSupabaseSale(sale: Sale): Promise<void> {
 
     const itemsToInsert = sale.items.map((i) => ({
       venda_id: createdSale.id,
-      produto_id: i.productId.length > 20 ? i.productId : null,
+      produto_id: i.productId || null,
       nome: i.name,
       quantidade: i.quantity,
       preco_unitario: i.unitPrice,
@@ -508,7 +507,7 @@ export async function saveSupabaseCashTransaction(tx: CashTransaction): Promise<
       descricao: tx.description,
       valor: tx.amount,
       usuario: tx.user,
-      venda_id: tx.saleId && tx.saleId.length > 20 ? tx.saleId : null,
+      venda_id: tx.saleId || null,
     });
   } catch (err) {
     console.error("Erro ao salvar transação de caixa:", err);
@@ -562,7 +561,7 @@ export async function saveSupabaseUser(user: AppUser): Promise<void> {
 
   try {
     await supabase.from("usuarios").upsert({
-      id: user.id.length > 20 ? user.id : undefined,
+      id: user.id,
       nome: user.name,
       email: user.email,
       role: user.role,
@@ -641,7 +640,7 @@ export async function recordSupabaseAudit(entry: AuditEntry): Promise<void> {
 
   try {
     await supabase.from("historico_auditoria").insert({
-      produto_id: entry.productId && entry.productId.length > 20 ? entry.productId : null,
+      produto_id: entry.productId || null,
       usuario: entry.user,
       tipo: entry.kind,
       campo: entry.field,
@@ -651,5 +650,87 @@ export async function recordSupabaseAudit(entry: AuditEntry): Promise<void> {
     });
   } catch (err) {
     console.error("Erro ao salvar log de auditoria no Supabase:", err);
+  }
+}
+
+// ==============================================================================
+// 7. MAQUININHAS DE CARTÃO
+// ==============================================================================
+
+export async function fetchCardMachines(): Promise<CardMachine[]> {
+  if (!isSupabaseConfigured) {
+    const cached = safeGetItem("cost_price_card_machines");
+    return cached ? JSON.parse(cached) : [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("maquininhas")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error || !data) {
+      const cached = safeGetItem("cost_price_card_machines");
+      return cached ? JSON.parse(cached) : [];
+    }
+
+    const machines: CardMachine[] = data.map((row) => ({
+      id: row.id,
+      nickname: row.apelido,
+      model: row.modelo || "",
+      acquirer: row.adquirente || "",
+      serialNumber: row.numero_serie || "",
+      status: row.status,
+      createdAt: row.created_at,
+    }));
+
+    safeSetItem("cost_price_card_machines", JSON.stringify(machines));
+    return machines;
+  } catch (err) {
+    console.error("Erro ao buscar maquininhas:", err);
+    const cached = safeGetItem("cost_price_card_machines");
+    return cached ? JSON.parse(cached) : [];
+  }
+}
+
+export async function saveCardMachine(machine: CardMachine): Promise<void> {
+  const cached = safeGetItem("cost_price_card_machines");
+  const list: CardMachine[] = cached ? JSON.parse(cached) : [];
+  const idx = list.findIndex((m) => m.id === machine.id);
+  if (idx >= 0) list[idx] = machine;
+  else list.unshift(machine);
+  safeSetItem("cost_price_card_machines", JSON.stringify(list));
+
+  if (!isSupabaseConfigured) return;
+
+  try {
+    const { error } = await supabase.from("maquininhas").upsert({
+      id: machine.id,
+      apelido: machine.nickname,
+      modelo: machine.model,
+      adquirente: machine.acquirer,
+      numero_serie: machine.serialNumber,
+      status: machine.status,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) console.error("Erro ao salvar maquininha no Supabase:", error);
+  } catch (err) {
+    console.error("Exceção ao salvar maquininha:", err);
+  }
+}
+
+export async function deleteCardMachine(id: string): Promise<void> {
+  const cached = safeGetItem("cost_price_card_machines");
+  if (cached) {
+    const list: CardMachine[] = JSON.parse(cached);
+    safeSetItem("cost_price_card_machines", JSON.stringify(list.filter((m) => m.id !== id)));
+  }
+
+  if (!isSupabaseConfigured) return;
+
+  try {
+    await supabase.from("maquininhas").delete().eq("id", id);
+  } catch (err) {
+    console.error("Erro ao excluir maquininha:", err);
   }
 }

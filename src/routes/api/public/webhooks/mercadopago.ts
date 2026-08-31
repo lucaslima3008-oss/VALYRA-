@@ -10,7 +10,8 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
     handlers: {
       POST: async ({ request }) => {
         const mp = await import("@/lib/mercadopago.server");
-        if (!mp.hasAccessToken()) return new Response("not configured", { status: 200 });
+        if (!(await mp.hasAccessTokenAsync()))
+          return new Response("not configured", { status: 200 });
 
         let body: Record<string, unknown> = {};
         try {
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         const type = String(body["type"] ?? body["topic"] ?? url.searchParams.get("type") ?? "");
         const dataObj = (body["data"] ?? {}) as Record<string, unknown>;
         const paymentId = String(
-          dataObj["id"] ?? body["id"] ?? url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? "",
+          dataObj["id"] ??
+            body["id"] ??
+            url.searchParams.get("data.id") ??
+            url.searchParams.get("id") ??
+            "",
         );
 
         if (!paymentId || (type && !type.includes("payment"))) {

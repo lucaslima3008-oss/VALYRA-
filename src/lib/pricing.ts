@@ -41,7 +41,10 @@ export interface Product {
   manualPrice: number | null;
 }
 
-export const uid = () => Math.random().toString(36).slice(2, 10);
+export const uid = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2, 10);
 
 export const emptyProduct = (): Product => ({
   id: uid(),

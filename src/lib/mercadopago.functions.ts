@@ -23,7 +23,7 @@ export const createCharge = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => chargeInput.parse(data))
   .handler(async ({ data }) => {
     const mp = await import("./mercadopago.server");
-    if (!mp.hasAccessToken()) {
+    if (!(await mp.hasAccessTokenAsync())) {
       return { ok: false as const, error: "Access Token do Mercado Pago não configurado." };
     }
 
@@ -47,14 +47,18 @@ export const createCharge = createServerFn({ method: "POST" })
         backUrl: baseUrl,
       });
 
+      const sandbox = await mp.isSandboxTokenAsync();
       return {
         ok: true as const,
         preferenceId: pref.id,
-        initPoint: mp.isSandboxToken() ? (pref.sandbox_init_point ?? pref.init_point) : pref.init_point,
-        sandbox: mp.isSandboxToken(),
+        initPoint: sandbox ? (pref.sandbox_init_point ?? pref.init_point) : pref.init_point,
+        sandbox,
       };
     } catch (err) {
-      return { ok: false as const, error: err instanceof Error ? err.message : "Erro desconhecido" };
+      return {
+        ok: false as const,
+        error: err instanceof Error ? err.message : "Erro desconhecido",
+      };
     }
   });
 
@@ -63,7 +67,7 @@ export const getChargeStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ saleCode: z.string().min(1).max(64) }).parse(data))
   .handler(async ({ data }) => {
     const mp = await import("./mercadopago.server");
-    if (!mp.hasAccessToken()) return { status: "pendente" as const, found: false };
+    if (!(await mp.hasAccessTokenAsync())) return { status: "pendente" as const, found: false };
 
     const payments = await mp.searchPaymentsByReference(data.saleCode);
     const latest = payments[0];
@@ -78,14 +82,58 @@ export const getChargeStatus = createServerFn({ method: "POST" })
 /** Status da configuração (nunca devolve o valor dos secrets). */
 export const getMercadoPagoConfig = createServerFn({ method: "GET" }).handler(async () => {
   const mp = await import("./mercadopago.server");
-  const publicKey = process.env["MERCADOPAGO_PUBLIC_KEY"] || "";
+  const publicKey = await mp.getPublicKeyAsync();
   const baseUrl = resolveBaseUrl(getRequest().url);
   return {
-    accessTokenConfigured: mp.hasAccessToken(),
+    accessTokenConfigured: await mp.hasAccessTokenAsync(),
     publicKeyConfigured: Boolean(publicKey),
-    publicKeyPreview: publicKey ? `${publicKey.slice(0, 8)}••••${publicKey.slice(-4)}` : "",
-    sandbox: mp.isSandboxToken(),
+    publicKeyPreview: publicKey ? mp.maskSecret(publicKey) : "",
+    sandbox: await mp.isSandboxTokenAsync(),
     webhookUrl: `${baseUrl.replace(/\/$/, "")}/api/public/webhooks/mercadopago`,
-    databaseConfigured: Boolean(process.env["SUPABASE_SERVICE_ROLE_KEY"] && process.env["SUPABASE_URL"]),
+    databaseConfigured: Boolean(
+      process.env["SUPABASE_SERVICE_ROLE_KEY"] && process.env["SUPABASE_URL"],
+    ),
+    canEditKeys: Boolean(process.env["SUPABASE_SERVICE_ROLE_KEY"] && process.env["SUPABASE_URL"]),
   };
 });
+
+const updateSettingsInput = z.object({
+  isAdmin: z.boolean(),
+  accessToken: z.string().max(500).optional(),
+  publicKey: z.string().max(500).optional(),
+});
+
+/**
+ * Atualiza Access Token e/ou Public Key do Mercado Pago sem precisar redeploy.
+ * O valor fica salvo no banco (tabela configuracoes_pagamento) e passa a ter
+ * prioridade sobre a variável de ambiente. Enviar string vazia remove o override
+ * e volta a usar a variável de ambiente.
+ *
+ * IMPORTANTE: `isAdmin` aqui é apenas um sinal vindo do cliente — este projeto não
+ * usa Supabase Auth para autenticação de sessão, então esta função confia na mesma
+ * checagem de papel que já protege o restante da tela de Configurações no front-end.
+ * Se isso precisar ser à prova de manipulação de request, é necessário adicionar
+ * autenticação de sessão real (Supabase Auth) e validar o papel no servidor.
+ */
+export const updatePaymentSettings = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => updateSettingsInput.parse(data))
+  .handler(async ({ data }) => {
+    if (!data.isAdmin) {
+      return { ok: false as const, error: "Apenas administradores podem editar as chaves." };
+    }
+    const mp = await import("./mercadopago.server");
+    const results: string[] = [];
+
+    if (data.accessToken !== undefined) {
+      const r = await mp.setPaymentOverride("mercadopago_access_token", data.accessToken);
+      if (!r.ok) return { ok: false as const, error: r.error ?? "Falha ao salvar Access Token." };
+      results.push("accessToken");
+    }
+    if (data.publicKey !== undefined) {
+      const r = await mp.setPaymentOverride("mercadopago_public_key", data.publicKey);
+      if (!r.ok) return { ok: false as const, error: r.error ?? "Falha ao salvar Public Key." };
+      results.push("publicKey");
+    }
+
+    return { ok: true as const, updated: results };
+  });
