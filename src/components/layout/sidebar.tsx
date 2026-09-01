@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import valyraMark from "@/assets/valyra-mark.png";
 import { cn } from "@/lib/utils";
-import { roleLabel, type AppUser } from "@/lib/users";
+import { roleLabel, type UserRole } from "@/lib/users";
 
 export type AppModule =
   | "produtos"
@@ -109,7 +109,7 @@ export function Sidebar({
           },
         ]
       : []),
-  ];
+  ].filter((item) => allowedModules.includes(item.id));
 
   return (
     <>
@@ -239,29 +239,14 @@ export function Sidebar({
             </span>
           </div>
 
-          <div className="relative">
-            <select
-              aria-label="Alternar perfil de usuário"
-              value={currentUser.id}
-              onChange={(e) => onSelectUser(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-slate-700/80 bg-[#0A0A0A] px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 outline-none transition-colors hover:border-slate-600 focus:border-[#D4AF37]"
-            >
-              {users.length > 0 ? (
-                users.map((u) => (
-                  <option key={u.id} value={u.id} className="bg-slate-900 text-slate-100">
-                    {u.name} ({roleLabel[u.role] || u.role})
-                  </option>
-                ))
-              ) : (
-                <option value={fallbackUser.id} className="bg-slate-900 text-slate-100">
-                  {fallbackUser.name} ({roleLabel[fallbackUser.role]})
-                </option>
-              )}
-            </select>
-            <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">
-              ▼
-            </div>
-          </div>
+          <p className="truncate text-xs font-medium text-slate-200" title={currentUserName}>
+            {currentUserName}
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-400">
+            {isAdmin
+              ? "Acesso total aos módulos do sistema"
+              : "Acesso limitado aos módulos operacionais"}
+          </p>
         </div>
       </div>
       </aside>
