@@ -12,6 +12,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { AuthGate } from "@/components/auth/auth-gate";
+import { useAppRole } from "@/hooks/use-app-role";
+import { canAccessModule, defaultModuleFor, modulePermissions } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,7 +117,7 @@ function Index() {
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [cashTransactions, setCashTransactions] = useState<CashTransaction[]>(initialCashTransactions);
   const [users, setUsers] = useState<AppUser[]>(mockUsers);
-  const [currentUserId, setCurrentUserId] = useState<string>(mockUsers[0]?.id || "usr-1");
+  const { role: authRole, email: authEmail, loading: roleLoading } = useAppRole();
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
   // Pricing Filter State
@@ -142,9 +144,6 @@ function Index() {
       setSales(sls);
       setCashTransactions(txs);
       setUsers(usrs);
-      if (usrs.length > 0 && usrs[0] && !currentUserId) {
-        setCurrentUserId(usrs[0].id);
-      }
       setAuditLog(logs);
     } catch (err) {
       console.error("Erro ao carregar dados do Supabase:", err);
@@ -157,17 +156,30 @@ function Index() {
     loadAllData();
   }, []);
 
-  const currentUser =
-    users.find((u) => u.id === currentUserId) ||
-    users[0] || {
-      id: "usr-admin",
-      name: "Administrador",
-      email: "admin@empresa.com.br",
-      role: "admin" as const,
-      status: "ativo" as const,
-    };
+  const role = authRole ?? "operacional";
+  const allowedModules = modulePermissions[role];
 
-  const canEdit = currentUser?.role === "admin" && currentUser?.status === "ativo";
+  const registeredUser = users.find(
+    (u) => u.email.toLowerCase() === (authEmail || "").toLowerCase(),
+  );
+
+  const currentUser: AppUser = {
+    id: registeredUser?.id ?? "sessao",
+    name: registeredUser?.name || authEmail || "Usuário",
+    email: authEmail || registeredUser?.email || "",
+    role,
+    status: registeredUser?.status ?? "ativo",
+  };
+
+  const canEdit = role === "admin";
+
+  // Redireciona para um módulo permitido caso o papel não tenha acesso ao atual
+  useEffect(() => {
+    if (roleLoading) return;
+    if (!canAccessModule(role, activeModule)) {
+      setActiveModule(defaultModuleFor(role));
+    }
+  }, [role, activeModule, roleLoading]);
 
   // Low stock counter for sidebar badge
   const lowStockCount = useMemo(() => {
@@ -443,10 +455,12 @@ function Index() {
       {/* 1. Left Sidebar (fixa no desktop, retrátil em mobile/tablet) */}
       <Sidebar
         activeModule={activeModule}
-        onSelectModule={setActiveModule}
-        users={users}
-        currentUserId={currentUserId}
-        onSelectUser={setCurrentUserId}
+        onSelectModule={(m) => {
+          if (canAccessModule(role, m)) setActiveModule(m);
+        }}
+        currentUserName={currentUser.name}
+        currentUserRole={role}
+        allowedModules={allowedModules}
         lowStockCount={lowStockCount}
         mobileOpen={menuOpen}
         onCloseMobile={() => setMenuOpen(false)}
@@ -634,7 +648,7 @@ function Index() {
           )}
 
           {/* TAB 4: FLUXO DE CAIXA */}
-          {activeModule === "fluxo_caixa" && (
+          {activeModule === "fluxo_caixa" && canAccessModule(role, "fluxo_caixa") && (
             <CashflowView
               transactions={cashTransactions}
               canManage={canEdit}
@@ -644,7 +658,7 @@ function Index() {
           )}
 
           {/* TAB 5: USUÁRIOS */}
-          {activeModule === "usuarios" && (
+          {activeModule === "usuarios" && canEdit && (
             <UsersPanel
               users={users}
               canManage={canEdit}
@@ -655,10 +669,10 @@ function Index() {
           )}
 
           {/* TAB 6: AUDITORIA */}
-          {activeModule === "auditoria" && <AuditView entries={auditLog} />}
+          {activeModule === "auditoria" && canEdit && <AuditView entries={auditLog} />}
 
           {/* TAB 7: CONFIGURAÇÕES */}
-          {activeModule === "configuracoes" && <SettingsView isAdmin={currentUser.role === "admin"} />}
+          {activeModule === "configuracoes" && canEdit && <SettingsView isAdmin />}
         </main>
 
         <footer className="border-t border-[#D4AF37]/20 bg-[#0A0A0A]/80 px-4 py-4 text-[11px] text-white/50 sm:px-8 sm:text-xs">
