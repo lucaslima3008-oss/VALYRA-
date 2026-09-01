@@ -315,6 +315,30 @@ export type Database = {
           },
         ]
       }
+      papeis_por_email: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           card_fee_pct: number | null
@@ -489,6 +513,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      sincronizar_meu_papel: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
       }
     }
     Enums: {
