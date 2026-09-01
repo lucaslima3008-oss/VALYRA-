@@ -9,7 +9,10 @@ import {
   Database,
   RefreshCw,
   Menu,
+  LogOut,
 } from "lucide-react";
+import { AuthGate } from "@/components/auth/auth-gate";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -90,7 +93,11 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: Index,
+  component: () => (
+    <AuthGate>
+      <Index />
+    </AuthGate>
+  ),
 });
 
 type Filter = "todos" | ProductType;
@@ -504,6 +511,16 @@ function Index() {
               className="size-11 sm:size-9"
             >
               <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              title="Sair da conta"
+              onClick={() => supabase.auth.signOut()}
+              className="size-11 sm:size-9"
+            >
+              <LogOut className="size-4" />
             </Button>
 
             {!canEdit && activeModule === "precificacao" && (
