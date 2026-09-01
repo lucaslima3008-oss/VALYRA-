@@ -28,9 +28,11 @@ export type AppModule =
 interface SidebarProps {
   activeModule: AppModule;
   onSelectModule: (module: AppModule) => void;
-  users: AppUser[];
-  currentUserId: string;
-  onSelectUser: (userId: string) => void;
+  /** Nome exibido do usuário autenticado (normalmente o e-mail) */
+  currentUserName: string;
+  currentUserRole: UserRole;
+  /** Módulos liberados para o papel do usuário autenticado */
+  allowedModules: AppModule[];
   lowStockCount?: number;
   unresolvedAudits?: number;
   /** Controla a exibição do menu em overlay no mobile/tablet */
@@ -38,27 +40,19 @@ interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-const fallbackUser: AppUser = {
-  id: "usr-default",
-  name: "Administrador",
-  email: "admin@empresa.com.br",
-  role: "admin",
-  status: "ativo",
-};
-
 export function Sidebar({
   activeModule,
   onSelectModule,
-  users = [],
-  currentUserId,
-  onSelectUser,
+  currentUserName,
+  currentUserRole,
+  allowedModules,
   lowStockCount = 0,
   mobileOpen = false,
   onCloseMobile,
 }: SidebarProps) {
-  const currentUser = users.find((u) => u.id === currentUserId) || users[0] || fallbackUser;
-  const currentRole = currentUser.role || "admin";
+  const currentRole: UserRole = currentUserRole || "operacional";
   const isAdmin = currentRole === "admin";
+
 
   const navigationItems = [
     {
