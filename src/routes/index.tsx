@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { useAppRole } from "@/hooks/use-app-role";
-import { canAccessModule, defaultModuleFor, modulePermissions } from "@/lib/permissions";
+import { canAccessModule, defaultModuleFor } from "@/lib/permissions";
+import { useModulePermissions } from "@/hooks/use-module-permissions";
+import { PermissionsView } from "@/components/permissions/permissions-view";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,7 +159,12 @@ function Index() {
   }, []);
 
   const role = authRole ?? "operacional";
-  const allowedModules = modulePermissions[role];
+  const {
+    permissions: modulePerms,
+    loading: permsLoading,
+    setPermission,
+  } = useModulePermissions();
+  const allowedModules = modulePerms[role];
 
   const registeredUser = users.find(
     (u) => u.email.toLowerCase() === (authEmail || "").toLowerCase(),
@@ -175,11 +182,11 @@ function Index() {
 
   // Redireciona para um módulo permitido caso o papel não tenha acesso ao atual
   useEffect(() => {
-    if (roleLoading) return;
-    if (!canAccessModule(role, activeModule)) {
-      setActiveModule(defaultModuleFor(role));
+    if (roleLoading || permsLoading) return;
+    if (!canAccessModule(role, activeModule, modulePerms)) {
+      setActiveModule(defaultModuleFor(role, modulePerms));
     }
-  }, [role, activeModule, roleLoading]);
+  }, [role, activeModule, roleLoading, permsLoading, modulePerms]);
 
   // Low stock counter for sidebar badge
   const lowStockCount = useMemo(() => {
@@ -456,7 +463,7 @@ function Index() {
       <Sidebar
         activeModule={activeModule}
         onSelectModule={(m) => {
-          if (canAccessModule(role, m)) setActiveModule(m);
+          if (canAccessModule(role, m, modulePerms)) setActiveModule(m);
         }}
         currentUserName={currentUser.name}
         currentUserRole={role}
@@ -493,6 +500,8 @@ function Index() {
                 ? "Fluxo de Caixa"
                 : activeModule === "usuarios"
                 ? "Gestão de Usuários"
+                : activeModule === "permissoes"
+                ? "Papéis & Permissões"
                 : activeModule === "configuracoes"
                 ? "Configurações & Integrações"
                 : "Histórico de Auditoria"}
@@ -648,7 +657,7 @@ function Index() {
           )}
 
           {/* TAB 4: FLUXO DE CAIXA */}
-          {activeModule === "fluxo_caixa" && canAccessModule(role, "fluxo_caixa") && (
+          {activeModule === "fluxo_caixa" && canAccessModule(role, "fluxo_caixa", modulePerms) && (
             <CashflowView
               transactions={cashTransactions}
               canManage={canEdit}
@@ -671,7 +680,18 @@ function Index() {
           {/* TAB 6: AUDITORIA */}
           {activeModule === "auditoria" && canEdit && <AuditView entries={auditLog} />}
 
-          {/* TAB 7: CONFIGURAÇÕES */}
+          {/* TAB 7: PAPÉIS & PERMISSÕES */}
+          {activeModule === "permissoes" && canEdit && (
+            <PermissionsView
+              permissions={modulePerms}
+              loading={permsLoading}
+              onTogglePermission={(r, m, allowed) => setPermission(r, m, allowed)}
+              users={users}
+              onChangeUserRole={(id, r) => handleUpdateUser(id, { role: r })}
+            />
+          )}
+
+          {/* TAB 8: CONFIGURAÇÕES */}
           {activeModule === "configuracoes" && canEdit && <SettingsView isAdmin />}
         </main>
 
