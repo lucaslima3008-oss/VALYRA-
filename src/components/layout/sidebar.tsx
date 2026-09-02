@@ -104,6 +104,12 @@ export function Sidebar({
     ...(isAdmin
       ? [
           {
+            id: "permissoes" as AppModule,
+            label: "Papéis & Permissões",
+            icon: ShieldCheck,
+            description: "Acessos por papel e módulo",
+          },
+          {
             id: "configuracoes" as AppModule,
             label: "Configurações",
             icon: Settings,
@@ -112,6 +118,7 @@ export function Sidebar({
         ]
       : []),
   ].filter((item) => allowedModules.includes(item.id));
+
 
   return (
     <>
