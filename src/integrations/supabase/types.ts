@@ -315,6 +315,33 @@ export type Database = {
           },
         ]
       }
+      permissoes_modulo: {
+        Row: {
+          created_at: string
+          id: string
+          modulo: string
+          permitido: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modulo: string
+          permitido?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modulo?: string
+          permitido?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           card_fee_pct: number | null
