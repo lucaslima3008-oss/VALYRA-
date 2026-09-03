@@ -163,6 +163,7 @@ function Index() {
     permissions: modulePerms,
     loading: permsLoading,
     setPermission,
+    applyTemplate,
   } = useModulePermissions();
   const allowedModules = modulePerms[role];
 
@@ -688,6 +689,7 @@ function Index() {
               onTogglePermission={(r, m, allowed) => setPermission(r, m, allowed)}
               users={users}
               onChangeUserRole={(id, r) => handleUpdateUser(id, { role: r })}
+              onApplyTemplate={applyTemplate}
             />
           )}
 
