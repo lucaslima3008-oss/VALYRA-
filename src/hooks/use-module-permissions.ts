@@ -81,5 +81,39 @@ export function useModulePermissions() {
     [load],
   );
 
-  return { permissions, loading, setPermission, refresh: load };
+  /** Aplica de uma vez uma matriz completa de permissões (template). */
+  const applyTemplate = useCallback(
+    async (template: ModulePermissions) => {
+      const normalized: ModulePermissions = {
+        admin: allModules.filter(
+          (m) => template.admin.includes(m) || lockedAdminModules.includes(m),
+        ),
+        operacional: allModules.filter((m) => template.operacional.includes(m)),
+      };
+      setPermissions(normalized);
+
+      const rows = (Object.keys(normalized) as UserRole[]).flatMap((role) =>
+        allModules.map((modulo) => ({
+          role,
+          modulo,
+          permitido: normalized[role].includes(modulo),
+        })),
+      );
+
+      const { error } = await supabase
+        .from("permissoes_modulo")
+        .upsert(rows, { onConflict: "role,modulo" });
+
+      if (error) {
+        console.error("Erro ao aplicar template de permissões:", error);
+        await load();
+        return false;
+      }
+      return true;
+    },
+    [load],
+  );
+
+  return { permissions, loading, setPermission, applyTemplate, refresh: load };
 }
+

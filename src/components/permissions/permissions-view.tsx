@@ -1,4 +1,7 @@
-import { Lock, ShieldCheck, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { Lock, ShieldCheck, Sparkles, User as UserIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { permissionTemplates } from "@/lib/permission-templates";
 import { cn } from "@/lib/utils";
 import type { AppModule } from "@/components/layout/sidebar";
 import { roleLabel, type AppUser, type UserRole } from "@/lib/users";
@@ -15,6 +18,7 @@ interface Props {
   onTogglePermission: (role: UserRole, module: AppModule, allowed: boolean) => void;
   users: AppUser[];
   onChangeUserRole: (id: string, role: UserRole) => void;
+  onApplyTemplate: (permissions: ModulePermissions) => void | Promise<unknown>;
 }
 
 const roles: UserRole[] = ["admin", "operacional"];
@@ -25,7 +29,15 @@ export function PermissionsView({
   onTogglePermission,
   users,
   onChangeUserRole,
+  onApplyTemplate,
 }: Props) {
+  const [appliedId, setAppliedId] = useState<string | null>(null);
+
+  const apply = async (id: string, permissions: ModulePermissions) => {
+    await onApplyTemplate(permissions);
+    setAppliedId(id);
+  };
+
   return (
     <section className="space-y-6">
       <div>
@@ -33,6 +45,38 @@ export function PermissionsView({
         <p className="text-sm text-muted-foreground">
           Defina quais módulos cada papel enxerga e atribua o papel de cada colaborador.
         </p>
+      </div>
+
+      {/* Templates rápidos */}
+      <div className="rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 text-amber-500" />
+          <h3 className="text-base font-semibold tracking-tight">Templates de permissões</h3>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Aplique uma configuração pronta para os papéis — você pode ajustar cada módulo depois.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {permissionTemplates.map((tpl) => (
+            <div
+              key={tpl.id}
+              className="flex flex-col justify-between gap-3 rounded-lg border bg-surface p-3"
+            >
+              <div>
+                <p className="text-sm font-semibold">{tpl.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{tpl.description}</p>
+              </div>
+              <Button
+                variant="outline"
+                className="min-h-11 w-full"
+                disabled={loading}
+                onClick={() => apply(tpl.id, tpl.permissions)}
+              >
+                {appliedId === tpl.id ? "Template aplicado" : "Aplicar template"}
+              </Button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Matriz de permissões */}
