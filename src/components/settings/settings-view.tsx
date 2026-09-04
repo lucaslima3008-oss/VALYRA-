@@ -23,6 +23,7 @@ import { getMercadoPagoConfig, updatePaymentSettings } from "@/lib/mercadopago.f
 import { uid } from "@/lib/pricing";
 import type { CardMachine } from "@/lib/card-machines";
 import { fetchCardMachines, saveCardMachine, deleteCardMachine } from "@/lib/supabase-service";
+import { CompanySection } from "@/components/settings/company-section";
 
 interface MpConfig {
   accessTokenConfigured: boolean;
@@ -389,6 +390,8 @@ export function SettingsView({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-6">
+      <CompanySection isAdmin={isAdmin} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
