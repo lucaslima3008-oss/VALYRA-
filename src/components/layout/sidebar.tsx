@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Package,
   Settings,
+  FileText,
 } from "lucide-react";
 import valyraMark from "@/assets/valyra-mark.png";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export type AppModule =
   | "estoque"
   | "vendas"
   | "fluxo_caixa"
+  | "relatorios"
   | "usuarios"
   | "auditoria"
   | "permissoes"
@@ -88,6 +90,12 @@ export function Sidebar({
       label: "Fluxo de Caixa",
       icon: TrendingUp,
       description: "Entradas, saídas e saldo",
+    },
+    {
+      id: "relatorios" as AppModule,
+      label: "Relatórios",
+      icon: FileText,
+      description: "Exportação em PDF da empresa",
     },
     {
       id: "usuarios" as AppModule,

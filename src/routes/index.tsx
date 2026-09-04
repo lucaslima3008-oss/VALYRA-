@@ -29,6 +29,7 @@ import { PosView } from "@/components/pos/pos-view";
 import { CashflowView } from "@/components/cashflow/cashflow-view";
 import { AuditView } from "@/components/audit/audit-view";
 import { SettingsView } from "@/components/settings/settings-view";
+import { ReportsView } from "@/components/reports/reports-view";
 
 import { creationEntry, diffProduct, type AuditEntry } from "@/lib/audit";
 import { roleLabel, mockUsers, type AppUser } from "@/lib/users";
@@ -499,6 +500,8 @@ function Index() {
                 ? "Frente de Caixa (PDV)"
                 : activeModule === "fluxo_caixa"
                 ? "Fluxo de Caixa"
+                : activeModule === "relatorios"
+                ? "Relatórios"
                 : activeModule === "usuarios"
                 ? "Gestão de Usuários"
                 : activeModule === "permissoes"
@@ -664,6 +667,16 @@ function Index() {
               canManage={canEdit}
               currentUserName={currentUser.name}
               onAddTransaction={handleAddTransaction}
+            />
+          )}
+
+          {/* TAB 4.5: RELATÓRIOS */}
+          {activeModule === "relatorios" && canAccessModule(role, "relatorios", modulePerms) && (
+            <ReportsView
+              products={products}
+              inventory={inventory}
+              sales={sales}
+              transactions={cashTransactions}
             />
           )}
 
